@@ -1,34 +1,36 @@
 export const appName = "Soccer Web Platform"
 
 export type Player = {
+    uid: string,
     name: string,
-    email: string,
+    bio: string
+    thumbnailUrl: string | null,
     localArea: string | null,
-    position: string | null,
+    position: string,
     warningScore: number
+    blockedPlayers: Player[] | null,
+    lastOnline: Date | any
 }
 
 export type Game = {
-    organiser: string,
+    id: string
+    organizer: Player,
     title: string,
     description: string,
     location: string,
-    dateTime: Date | any
-    playerLevel: string,
-    visibility: Visibility,
+    date: Date
+    time: Date
+    playerLevel: number,
+    passcode: string | null
+    participants: number
     maxPlayers: number | null
-    minimumPlayers: number | null
+    minPlayers: number | null
     customRules: string | null
     requirements: string | null
-    blockedPlayers: Player[]
-}
-
-export enum Visibility {
-    public,
-    private
 }
 
 export type Manager = {
+    uid: string,
     name: string,
     email: string,
     teamName: string,
@@ -38,13 +40,14 @@ export type Manager = {
 }
 
 export type Team = {
+    id: string
     name: string,
     description: string,
     homeGround: string,
     manager: Manager,
     rules: string,
     requirements: string,
-    visibility: Visibility
+    openToPublic: boolean
     lookingPlayers: boolean
     blockedPlayers: Player[]
     trainingDates: string | null
@@ -57,17 +60,30 @@ export type Plan = {
     description: PlanDescription
 }
 
-enum PlanName {
+export enum PlanName {
     player = "Player",
     manager = "Manager"
 }
 
-enum PlanFee {
+export enum PlanFee {
     player = 0,
     manager = 10
 }
 
-enum PlanDescription {
+export enum PlanDescription {
     player = "Can join a game and organise (public?) game",
     manager = "Can create own team"
+}
+
+export const getPlayerLevel = (level: number) => {
+    switch (level) {
+        case 1:
+            return "Mid level"
+        case 2:
+            return "High level"
+        case 3:
+            return "Professional level"
+        default:
+            return "Anyone"
+    }
 }

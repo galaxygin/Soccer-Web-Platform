@@ -2,28 +2,28 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "../../SupabaseManager";
 
 export async function signInWithEmail(email: string, password: string): Promise<User> {
-    let { user, error } = await supabase.auth.signIn({email: email,password: password})
+    let { user, error } = await supabase.auth.signIn({ email: email, password: password })
     if (error)
         throw error
-    return user as User
+    return user!
 }
 
 export async function signInWithGoogle(): Promise<User> {
-    let { user, error } = await supabase.auth.signIn({provider: 'google'})
+    let { user, error } = await supabase.auth.signIn({ provider: 'google' })
     if (error)
         throw error
-    return user as User
+    return user!
 }
 
 export async function signUp(email: string, password: string): Promise<User> {
-    let { user, error } = await supabase.auth.signUp({email: email,password: password})
+    let { user, error } = await supabase.auth.signUp({ email: email, password: password })
     if (error)
         throw error
-    return user as User
+    return user!
 }
 
-export async function addUserToDB(id: string) {
-    const { data, error } = await supabase.from('players').insert([{ id: (id) ? id : getUser()!.id }])
+export async function addUserToDB(uid: string, name: string, bio: string, thumbnailUrl: string | null, localArea: string | null, position: string) {
+    const { data, error } = await supabase.from('players').insert([{ uid: uid, name: name, bio: bio, thumbnail_url: thumbnailUrl, local_area: localArea, position: position }])
     if (error)
         throw error
     return data

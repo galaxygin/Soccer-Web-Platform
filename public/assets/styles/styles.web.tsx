@@ -2,11 +2,19 @@ import { makeStyles, alpha, createStyles, Theme } from "@material-ui/core";
 
 export const drawerWidth = 240;
 
-export const defaultTheme = "#87ceeb"
+export const defaultTheme = "white"
 
-export const backgroundTheme = '#191970'
+export const backgroundTheme = '#2d7719'
 
-export const defaultTextColor = 'white'
+export const primaryTextColor = "white"
+
+export const darkerTextColor = "#272c58"
+
+export const brighterBlueTextColor = "#6a9cd4"
+
+export const defaultTextColor = brighterBlueTextColor
+
+export const goldColor = "#f8b00d"
 
 export const headerTint = 'white'
 
@@ -147,6 +155,11 @@ export const useStyles = makeStyles((theme) => ({
             display: 'none',
         },
     },
+    formTextField: {
+        backgroundColor: "white",
+        color: darkerTextColor,
+        marginTop: 16
+    }
 }));
 
 export const drawerStyles = makeStyles((theme: Theme) =>

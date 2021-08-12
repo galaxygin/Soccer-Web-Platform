@@ -6,7 +6,7 @@ import { backgroundTheme, defaultTheme } from './styles.web';
 const theme = createTheme({
     palette: {
         primary: {
-            main: defaultTheme,
+            main: "#FFFFFF",
         },
         secondary: {
             main: '#4d4546',
