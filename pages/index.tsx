@@ -9,7 +9,7 @@ import { useCookies } from 'react-cookie'
 import { isMobile } from 'react-device-detect'
 import { getUser } from '../api/request/AuthRequest'
 import { getTodaysGames, getGamesOfTheWeek, organizeGame } from '../api/request/GameRequest'
-import { removeSecondsFromTime } from '../components/DateManager'
+import { formatTimeToString, removeSecondsFromTime } from '../components/DateManager'
 import { Game } from '../Definitions'
 import { backgroundTheme, darkerTextColor, defaultTheme, useStyles } from '../public/assets/styles/styles.web'
 import PageBase from './PageBase'
@@ -180,7 +180,7 @@ export default function Home() {
                   'aria-label': 'change date',
                 }}
               />
-              <KeyboardTimePicker
+              {/* <KeyboardTimePicker
                 format="HH:mm"
                 margin="normal"
                 id="time-picker"
@@ -191,8 +191,9 @@ export default function Home() {
                   'aria-label': 'change time',
                 }}
                 style={{ color: darkerTextColor }}
-              />
+              /> */}
             </MuiPickersUtilsProvider>
+            <TextField label="Time" variant="outlined" className={styles.formTextField} onChange={e => setTime(time)} defaultValue={formatTimeToString(time)} type="time" />
             {/* <TextField id="datetime-local" label="Game schedule" variant="outlined" className={styles.formTextField} onChange={e => setDatetime(new Date(e.target.value))} value={format(datetime, "yyyy-MM-dd'T'HH:mm")} fullWidth type="datetime-local" /> */}
             <TextField label="Player level" variant="outlined" className={styles.formTextField} onChange={e => setPlayerLevel(parseInt(e.target.value))} value={playerLevel} fullWidth select>
               <MenuItem key={0} value={0}>Anyone</MenuItem>

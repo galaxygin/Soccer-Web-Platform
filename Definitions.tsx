@@ -27,6 +27,15 @@ export type Game = {
     minPlayers: number | null
     customRules: string | null
     requirements: string | null
+    status: string | null
+}
+
+export type GameMetaData = {
+    id: string
+    organizer: string
+    title: string
+    description: string
+    passcode: boolean
 }
 
 export type Manager = {
