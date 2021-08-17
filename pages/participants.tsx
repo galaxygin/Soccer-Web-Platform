@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { backgroundTheme, darkerTextColor, useStyles } from "../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
 import { AccountCircle, LockTwoTone, RefreshTwoTone } from "@material-ui/icons";
-import { getParticipants } from "../api/request/GameRequest";
+import { getParticipants } from "../api/request/GameTestRequest";
 import { RealtimeSubscription } from "@supabase/supabase-js";
 import { supabase } from "../SupabaseManager";
 import { getSimpleProfile } from "../api/request/UserRequest";
