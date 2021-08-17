@@ -3,13 +3,14 @@ import { useRouter } from 'next/router'
 import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Snackbar } from '@material-ui/core';
 import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone, Close } from '@material-ui/icons';
 import Header from './Header';
-import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, themeColor, useStyles } from '../public/assets/styles/styles.web';
+import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
 import { appName } from '../Definitions';
 import { isMobile } from 'react-device-detect'
 import { addUserToDB, getUser, signInWithEmail, signInWithGoogle, signOut, signUp } from '../api/request/AuthRequest';
-import { checkUserRegisteredAsPlayer, getProfile, uploadThumbnail } from '../api/request/UserRequest';
+import { checkUserRegisteredAsPlayer, getProfile } from '../api/request/UserRequest';
 import { Alert } from '@material-ui/lab';
 import { useCookies } from 'react-cookie';
+import { updateThumbnail } from '../components/UserDataManager';
 
 interface props {
     content: JSX.Element,
@@ -173,7 +174,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                     {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
                     <input type="file" onChange={pickImage} className="filetype" accept="image/*" id="group_image" />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
                         setThumbLoading(true)
-                        uploadThumbnail(cookies.uid, newThumb!).then(url => {
+                        updateThumbnail(cookies.uid, newThumb!).then(url => {
                             setThumbnailUrl(url)
                         }).catch(error => {
                             setErrorThumbMsg(error.message)

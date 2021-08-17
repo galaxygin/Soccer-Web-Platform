@@ -107,7 +107,7 @@ export async function joinAGame(game_id: string, uid: string) {
     const { data, error } = await supabase.from("test_participants").insert({ game_id: game_id, uid: uid })
     if (error)
         throw error
-    let { data: participants } = await supabase.from("test_participants").select("count(uid)").eq('game_id', game_id)
+    let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
     await supabase.from("games").update({ participants: participants!.length + 1 })
     return data
 }
@@ -116,7 +116,7 @@ export async function cancelRSVP(game_id: string, uid: string) {
     const { data, error } = await supabase.from("test_participants").delete().match({ "game_id": game_id, "uid": uid })
     if (error)
         throw error
-    let { data: participants } = await supabase.from("test_participants").select("count(uid)").eq('game_id', game_id)
+    let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
     await supabase.from("games").update({ participants: participants!.length - 1 })
     return data
 }
