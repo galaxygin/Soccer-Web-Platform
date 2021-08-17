@@ -22,7 +22,7 @@ export async function getSimpleProfile(uid: string): Promise<SimpleProfile> {
 }
 
 export async function checkUserRegisteredAsPlayer(uid: string): Promise<boolean> {
-    const { data, error } = await supabase.from('players').select('count(uid').eq('uid', uid)
+    const { data, error } = await supabase.from('players').select('uid').eq('uid', uid)
     if (error)
         throw error
     if (data)

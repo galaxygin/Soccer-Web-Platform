@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Snackbar } from '@material-ui/core';
 import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone, Close } from '@material-ui/icons';
 import Header from './Header';
-import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
+import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, themeColor, useStyles } from '../public/assets/styles/styles.web';
 import { appName } from '../Definitions';
 import { isMobile } from 'react-device-detect'
 import { addUserToDB, getUser, signInWithEmail, signInWithGoogle, signOut, signUp } from '../api/request/AuthRequest';
@@ -33,7 +33,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [bio, setBio] = useState("")
     const [localArea, setLocalArea] = useState("")
     const [position, setPosition] = useState("")
-    const [setupErrorMsg, setSetupErrorMsg] = useState(null)
+    const [setupErrorMsg, setSetupErrorMsg] = useState("")
     const [newThumb, setNewThumb] = useState<File | null>(null)
     const [thumbLoading, setThumbLoading] = useState(false)
     const [errorThumbMsg, setErrorThumbMsg] = useState(null)
@@ -61,8 +61,9 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         if (player)
                             setThumbnailUrl(player.thumbnail_url)
                     }).catch(error => console.log(error.message))
-                else
+                else {
                     openSetupDialog(true)
+                }
             }).catch(error => {
                 setSnackErrorMsg(error.message)
                 openSnackbar(true)
@@ -166,7 +167,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         We need these informations at least
                     </Typography>
                     <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
-                    <TextField label="Bio" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
+                    <TextField label="Bio (Simply describe yourself)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
                     <Typography variant="h5" style={{ marginTop: 16 }} paragraph>Optional</Typography>
                     <Typography>Thumbnail</Typography>
                     {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
@@ -195,6 +196,14 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 </DialogContent>
                 <DialogActions>
                     <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
+                        if (!name) {
+                            setSetupErrorMsg("Name is required")
+                            return
+                        }
+                        if (!bio) {
+                            setSetupErrorMsg("Bio is required")
+                            return
+                        }
                         addUserToDB(cookies.uid, name, bio, thumbnail_url, localArea, position).then(() => {
                             openSetupDialog(false)
                             window.location.reload()
