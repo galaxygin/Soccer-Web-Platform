@@ -149,17 +149,13 @@ export default function HomeView() {
             }}>Post</Button>}
           </DialogActions>
         </Dialog>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
-            MY GAMES
-          </Typography>
-        </div>
+        <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          MY GAMES
+        </Typography>
         {(loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderMyGames()}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
-            GAMES THIS WEEK
-          </Typography>
-        </div>
+        <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          GAMES THIS WEEK
+        </Typography>
         {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
         <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
           <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router'
-import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress } from '@material-ui/core';
+import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Snackbar } from '@material-ui/core';
 import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone, Close } from '@material-ui/icons';
 import Header from './Header';
 import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
 import { appName } from '../Definitions';
 import { isMobile } from 'react-device-detect'
 import { addUserToDB, getUser, signInWithEmail, signInWithGoogle, signOut, signUp } from '../api/request/AuthRequest';
-import { getProfile, uploadThumbnail } from '../api/request/UserRequest';
+import { checkUserRegisteredAsPlayer, getProfile, uploadThumbnail } from '../api/request/UserRequest';
 import { Alert } from '@material-ui/lab';
 import { useCookies } from 'react-cookie';
 
@@ -39,6 +39,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [errorThumbMsg, setErrorThumbMsg] = useState(null)
 
     const [showSigninDialog, openSigninDialog] = useState(false)
+    const [authSuccessMsg, setAuthSuccessMsg] = useState("")
     const [authErrorMsg, setAuthErrorMsg] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -46,15 +47,26 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [myWindow, setWindow] = useState<Window | null>(null)
     const [signinMode, switchSigninMode] = useState("Sign in")
 
+    const [showSnackbar, openSnackbar] = useState(false)
+    const [snackErrorMsg, setSnackErrorMsg] = useState(null)
+
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
 
     useEffect(() => {
         if (getUser())
-            getProfile(cookies.uid).then(player => {
-                if (player)
-                    setThumbnailUrl(player.thumbnail_url)
-            }).catch(error => console.log(error.message))
+            checkUserRegisteredAsPlayer(cookies.uid).then(result => {
+                if (result)
+                    getProfile(cookies.uid).then(player => {
+                        if (player)
+                            setThumbnailUrl(player.thumbnail_url)
+                    }).catch(error => console.log(error.message))
+                else
+                    openSetupDialog(true)
+            }).catch(error => {
+                setSnackErrorMsg(error.message)
+                openSnackbar(true)
+            })
         setWidth(window.innerWidth)
         setHeight(window.innerHeight)
         setWindow(window)
@@ -146,7 +158,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
             <Dialog open={showSetupDialog} onClose={() => openSetupDialog(false)} fullScreen>
                 <DialogTitle>Setup Profile</DialogTitle>
                 <DialogContent>
-                    {(setupErrorMsg) ? <Alert severity="error">This is an error alert — check it out!</Alert> : null}
+                    {(setupErrorMsg) ? <Alert severity="error">{setupErrorMsg}</Alert> : null}
                     <Typography variant="h5" style={{ marginTop: 16 }}>
                         Required
                     </Typography>
@@ -248,6 +260,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 }}>
                     <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>Sign up</DialogTitle>
                     <DialogContent style={{ backgroundColor: '#454545' }}>
+                        {(authSuccessMsg) ? <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex', margin: 16 }}><Alert severity="success">{authSuccessMsg}</Alert></div> : null}
                         {(authErrorMsg) ? <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex', margin: 16 }}><Alert severity="error">Error: {authErrorMsg}</Alert></div> : null}
                         <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
                             <Button onClick={() => googleSignIn()}>
@@ -280,8 +293,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                 signUp(email, password).then(user => {
                                     if (user.id) {
                                         setCookie('uid', user.id)
-                                        openSetupDialog(true)
-                                        openSigninDialog(false)
+                                        setAuthSuccessMsg("Sign up success. Please confirm your enail first")
                                     }
                                 }).catch(error => setAuthErrorMsg(error.message))
                             }} style={{ margin: 16, backgroundColor: 'white' }}>
@@ -352,6 +364,9 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         <BottomNavigationAction label="Search" icon={<Search style={{ color: goldColor }} />} value="search" style={{ color: darkerTextColor }} />
                     </BottomNavigation>
                 </div>
+                <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
+                    <Alert onClose={() => openSnackbar(false)} severity="error">{snackErrorMsg}</Alert>
+                </Snackbar>
                 {playerSetupDialog()}
                 {accountMenu()}
             </div>
@@ -404,6 +419,9 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         </div>
                     </div>
                 </main>
+                <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
+                    <Alert onClose={() => openSnackbar(false)} severity="error">{snackErrorMsg}</Alert>
+                </Snackbar>
                 {playerSetupDialog()}
                 {accountMenu()}
             </div>
