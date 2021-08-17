@@ -4,7 +4,7 @@ import { supabase } from "../../SupabaseManager";
 
 //We can cosider adding the filter of excluding passed games
 export async function getMyGames(uid: string): Promise<GameHeader[]> {
-    const { data, error } = await supabase.from("participants").select("game: game_id(id, title, organizer(uid, name, thumbnail_url, position, is_private), location, date, time, player_level, participants, passcode, status)").order("timestamp", { ascending: true }).eq("uid", uid)
+    const { data, error } = await supabase.from("test_participants").select("game: game_id(id, title, organizer(uid, name, thumbnail_url, position, is_private), location, date, time, player_level, participants, passcode, status)").order("timestamp", { ascending: true }).eq("uid", uid)
     if (error)
         throw error
     const games: GameHeader[] = []
@@ -15,7 +15,7 @@ export async function getMyGames(uid: string): Promise<GameHeader[]> {
 }
 
 export async function getTodaysGames(): Promise<GameHeader[]> {
-    const { data, error } = await supabase.from("games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("date", "eq", formatDateToString(new Date())).order("time", { ascending: true })
+    const { data, error } = await supabase.from("test_games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("date", "eq", formatDateToString(new Date())).order("time", { ascending: true })
     if (error)
         throw error
     const games: GameHeader[] = []
@@ -26,7 +26,7 @@ export async function getTodaysGames(): Promise<GameHeader[]> {
 }
 
 export async function getGamesOfTheWeek(): Promise<GameHeader[]> {
-    const { data, error } = await supabase.from("games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("date", "gte", formatDateToString(getMondayOfTheWeek())).filter("date", "lt", formatDateToString(getNextMonday())).order("date", { ascending: true }).order("time", { ascending: true })
+    const { data, error } = await supabase.from("test_games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("date", "gte", formatDateToString(getMondayOfTheWeek())).filter("date", "lt", formatDateToString(getNextMonday())).order("date", { ascending: true }).order("time", { ascending: true })
     if (error)
         throw error
     const games: GameHeader[] = []
@@ -37,7 +37,7 @@ export async function getGamesOfTheWeek(): Promise<GameHeader[]> {
 }
 
 export async function getGameMetaData(id: string): Promise<GameMetaData> {
-    const { data, error } = await supabase.from("games").select("organizer, title, description, passcode").match({ "id": id })
+    const { data, error } = await supabase.from("test_games").select("organizer, title, description, passcode").match({ "id": id })
     if (error)
         throw error
     if (data)
@@ -49,7 +49,7 @@ export async function getGameMetaData(id: string): Promise<GameMetaData> {
 //If there is a header that holding a token of uid, we'll be able to
 //check if the user is the organizer or not
 export async function getGame(id: string): Promise<Game> {
-    const { data, error } = await supabase.from("games").select("*, organizer: organizer(uid, name, thumbnail_url, is_private)").match({ "id": id })
+    const { data, error } = await supabase.from("test_games").select("*, organizer: organizer(uid, name, thumbnail_url, is_private)").match({ "id": id })
     if (error)
         throw error
     if (data)
@@ -59,7 +59,7 @@ export async function getGame(id: string): Promise<Game> {
 }
 
 export async function getGameWithPasscode(id: string, passcode: string): Promise<Game> {
-    const { data, error } = await supabase.from("games").select("*, organizer: organizer(uid, name, thumbnail_url, is_private)").match({ "id": id, "passcode": passcode })
+    const { data, error } = await supabase.from("test_games").select("*, organizer: organizer(uid, name, thumbnail_url, is_private)").match({ "id": id, "passcode": passcode })
     if (error)
         throw error
     if (data)
@@ -69,30 +69,30 @@ export async function getGameWithPasscode(id: string, passcode: string): Promise
 }
 
 export async function organizeGame(uid: string, title: string, description: string, location: string, date: Date, time: string, player_level: number, passcode: string | null, max_players: number | null, min_players: number | null, custom_rules: string | null, requirements: string | null) {
-    const { data, error } = await supabase.from("games").insert({ organizer: uid, title: title, description: description, location: location, date: formatDateToString(date), time: time, player_level: player_level, passcode: passcode, max_players: max_players, min_players: min_players, custom_rules: custom_rules, requirements: requirements })
+    const { data, error } = await supabase.from("test_games").insert({ organizer: uid, title: title, description: description, location: location, date: formatDateToString(date), time: time, player_level: player_level, passcode: passcode, max_players: max_players, min_players: min_players, custom_rules: custom_rules, requirements: requirements })
     if (error)
         throw error
-    let { data: game_id } = await supabase.from("games").select("id").order('timestamp', { ascending: false }).eq('organizer', uid)
+    let { data: game_id } = await supabase.from("test_games").select("id").order('timestamp', { ascending: false }).eq('organizer', uid)
     await supabase.from("participants").insert({ id: game_id![0].id, game_id: game_id![0].id, uid: uid })
     return data
 }
 
 export async function updateGameDetail(game_id: string, title: string, description: string, location: string, date: Date, time: string, player_level: number, passcode: string | null, max_players: number | null, min_players: number | null, custom_rules: string | null, requirements: string | null) {
-    const { data, error } = await supabase.from("games").update({ title: title, description: description, location: location, "date": formatDateToString(date), "time": time, player_level: player_level, passcode: passcode, max_players: max_players, min_players: min_players, custom_rules: custom_rules, requirements: requirements }).eq("id", game_id)
+    const { data, error } = await supabase.from("test_games").update({ title: title, description: description, location: location, "date": formatDateToString(date), "time": time, player_level: player_level, passcode: passcode, max_players: max_players, min_players: min_players, custom_rules: custom_rules, requirements: requirements }).eq("id", game_id)
     if (error)
         throw error
     return data
 }
 
 export async function cancelGame(game_id: string) {
-    const { data, error } = await supabase.from("games").update({ status: "cancelled" }).match({ "id": game_id })
+    const { data, error } = await supabase.from("test_games").update({ status: "cancelled" }).match({ "id": game_id })
     if (error)
         throw error
     return data
 }
 
 export async function checkIsOrganizer(game_id: string, uid: string) {
-    const { data, error } = await supabase.from("games").select("*").match({ "id": game_id, "organizer": uid })
+    const { data, error } = await supabase.from("test_games").select("*").match({ "id": game_id, "organizer": uid })
     if (error)
         throw error
     if (data)
@@ -104,25 +104,25 @@ export async function checkIsOrganizer(game_id: string, uid: string) {
 }
 
 export async function joinAGame(game_id: string, uid: string) {
-    const { data, error } = await supabase.from("participants").insert({ game_id: game_id, uid: uid })
+    const { data, error } = await supabase.from("test_participants").insert({ game_id: game_id, uid: uid })
     if (error)
         throw error
-    let { data: participants } = await supabase.from("participants").select("count(uid)").eq('game_id', game_id)
+    let { data: participants } = await supabase.from("test_participants").select("count(uid)").eq('game_id', game_id)
     await supabase.from("games").update({ participants: participants!.length + 1 })
     return data
 }
 
 export async function cancelRSVP(game_id: string, uid: string) {
-    const { data, error } = await supabase.from("participants").delete().match({ "game_id": game_id, "uid": uid })
+    const { data, error } = await supabase.from("test_participants").delete().match({ "game_id": game_id, "uid": uid })
     if (error)
         throw error
-    let { data: participants } = await supabase.from("participants").select("count(uid)").eq('game_id', game_id)
+    let { data: participants } = await supabase.from("test_participants").select("count(uid)").eq('game_id', game_id)
     await supabase.from("games").update({ participants: participants!.length - 1 })
     return data
 }
 
 export async function getParticipants(game_id: string): Promise<SimpleProfile[]> {
-    const { data, error } = await supabase.from("participants").select("player: uid(uid, name, thumbnail_url, position, is_private)").eq("game_id", game_id)
+    const { data, error } = await supabase.from("test_participants").select("player: uid(uid, name, thumbnail_url, position, is_private)").eq("game_id", game_id)
     if (error)
         throw error
     if (data)
@@ -139,7 +139,7 @@ export async function getParticipants(game_id: string): Promise<SimpleProfile[]>
 export async function checkIsAlreadyJoining(game_id: string, uid: string): Promise<boolean> {
     if (!game_id || !uid)
         return false
-    const { data, error } = await supabase.from("participants").select("*").match({ "game_id": game_id, "uid": uid })
+    const { data, error } = await supabase.from("test_participants").select("*").match({ "game_id": game_id, "uid": uid })
     if (error)
         throw error
     if (data)
@@ -151,7 +151,7 @@ export async function checkIsAlreadyJoining(game_id: string, uid: string): Promi
 }
 
 export async function getChatMessages(game_id: string): Promise<Message[]> {
-    const { data, error } = await supabase.from("game_chats").select("*, sender: sender(uid, name, thumbnail_url, is_private)").filter("game_id", "eq", game_id).order("timestamp", { ascending: true })
+    const { data, error } = await supabase.from("test_game_chats").select("*, sender: sender(uid, name, thumbnail_url, is_private)").filter("game_id", "eq", game_id).order("timestamp", { ascending: true })
     if (error)
         throw error
     const messages: Message[] = []
@@ -162,14 +162,14 @@ export async function getChatMessages(game_id: string): Promise<Message[]> {
 }
 
 export async function sendChatMessage(game_id: string, uid: string, content: any) {
-    const { data, error } = await supabase.from("game_chats").insert({ game_id: game_id, sender: uid, content: content })
+    const { data, error } = await supabase.from("test_game_chats").insert({ game_id: game_id, sender: uid, content: content })
     if (error)
         throw error
     return data
 }
 
 export async function deleteChatMessage(message_id: string) {
-    const { data, error } = await supabase.from("game_chats").delete().match({ id: message_id })
+    const { data, error } = await supabase.from("test_game_chats").delete().match({ id: message_id })
     if (error)
         throw error
     return data

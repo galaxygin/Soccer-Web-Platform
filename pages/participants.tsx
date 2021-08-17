@@ -1,24 +1,24 @@
-import { AppBar, Button, CircularProgress, IconButton, List, ListItem, Toolbar, Typography } from "@material-ui/core";
+import { Button, CircularProgress, IconButton, List, ListItem, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { Player } from "../Definitions";
-import PageBase from "./PageBase";
+import { landscapeFieldImgURI, SimpleProfile } from "../Definitions";
 import Image from 'next/image'
 import { backgroundTheme, darkerTextColor, useStyles } from "../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
-import { AccountCircle, RefreshTwoTone } from "@material-ui/icons";
-import { Alert } from "@material-ui/lab";
+import { AccountCircle, LockTwoTone, RefreshTwoTone } from "@material-ui/icons";
 import { getParticipants } from "../api/request/GameRequest";
-import { isMobile } from "react-device-detect";
+import { RealtimeSubscription } from "@supabase/supabase-js";
+import { supabase } from "../SupabaseManager";
+import { getSimpleProfile } from "../api/request/UserRequest";
 
 interface props {
     game_id: string
 }
 
-export default function Participants({ game_id }: props) {
+export default function ParticipantsView({ game_id }: props) {
     const styles = useStyles()
     const router = useRouter()
-    const [participants, setParticipants] = useState<Player[]>([])
+    const [participants, setParticipants] = useState<SimpleProfile[]>([])
     const [cookies, setCookie, removeCookie] = useCookies(['uid'])
     const [loading, setLoading] = useState(true)
     const [width, setWidth] = useState(0)
@@ -28,13 +28,23 @@ export default function Participants({ game_id }: props) {
         updateList()
     }, [])
 
+    useEffect(() => {
+        var subscription: RealtimeSubscription
+        subscription = supabase.from('participants:game_id=eq.' + game_id)
+            .on('INSERT', payload => {
+                getSimpleProfile(payload.new.uid).then(user => setParticipants(prevState => [...prevState, { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url, position: user.position, is_private: user.is_private }]))
+            }).on('DELETE', payload => {
+                setParticipants(prevState => prevState.filter(participant => participant.uid !== payload.old.uid))
+            }).subscribe()
+        return () => {
+            if (subscription)
+                subscription.unsubscribe()
+        }
+    }, [])
+
     function updateList() {
         if (game_id) {
             getParticipants(game_id).then(participants => setParticipants(participants)).catch(error => console.log(error.message)).finally(() => setLoading(false))
-            return
-        }
-        if (router.query.id) {
-            getParticipants(router.query.id as string).then(participants => setParticipants(participants)).catch(error => console.log(error.message)).finally(() => setLoading(false))
             return
         }
         setLoading(false)
@@ -54,13 +64,8 @@ export default function Participants({ game_id }: props) {
         }
         if (participants.length > 0) {
             return (
-                <div style={{ display: "flex", flexDirection: "column", height: "100%", backgroundColor: "white", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}>
-                    <AppBar>
-                        <Toolbar>
-
-                        </Toolbar>
-                    </AppBar>
-                    <Image src={"/assets/images/SoccerFieldLandscape.jpg"} width={width * 0.5} height={350} />
+                <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", backgroundColor: "white", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}>
+                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={350} />
                     <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                         <Typography variant="h5" style={{ color: darkerTextColor, marginLeft: 16 }}>Participants</Typography>
                         <IconButton onClick={() => updateList()}>
@@ -69,13 +74,16 @@ export default function Participants({ game_id }: props) {
                     </div>
                     <List>
                         {participants.map(player => (
-                            <ListItem key={player.uid}>
-                                <Typography style={{ display: "flex", flexDirection: "row" }}>
-                                    {(player.thumbnailUrl) ? <img src={player.thumbnailUrl} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                            <ListItem key={player.uid} onClick={() => router.push({ pathname: "player", query: { uid: player.uid } })}>
+                                <Typography component={"div"} style={{ display: "flex", flexDirection: "row" }}>
+                                    {(player.thumbnail_url) ? <img src={player.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                     <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16 }}>
-                                        <Typography style={{ fontWeight: "bold" }}>
-                                            {player.name}
-                                        </Typography>
+                                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
+                                            <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
+                                                {player.name}
+                                            </Typography>
+                                            {(player.is_private) ? <LockTwoTone /> : null}
+                                        </div>
                                         Position: {player.position}
                                     </div>
                                 </Typography>
@@ -96,8 +104,5 @@ export default function Participants({ game_id }: props) {
         }
     }
 
-    if (isMobile)
-        return <PageBase content={content()} />
-    else
-        return content()
+    return content()
 }

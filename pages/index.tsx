@@ -1,17 +1,17 @@
 import DateFnsUtils from '@date-io/date-fns'
-import { Fab, ImageList, ImageListItem, Link, Dialog, Typography, DialogTitle, DialogContent, DialogActions, Button, TextField, Snackbar, MenuItem, CircularProgress } from '@material-ui/core'
-import { AddTwoTone, LockTwoTone } from '@material-ui/icons'
+import { Fab, Dialog, Typography, DialogTitle, DialogContent, DialogActions, Button, TextField, Snackbar, MenuItem, CircularProgress } from '@material-ui/core'
+import { AddTwoTone } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
-import { KeyboardDatePicker, KeyboardTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
-import Image from 'next/image'
+import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { isMobile } from 'react-device-detect'
 import { getUser } from '../api/request/AuthRequest'
-import { getTodaysGames, getGamesOfTheWeek, organizeGame } from '../api/request/GameRequest'
-import { formatTimeToString, removeSecondsFromTime } from '../components/DateManager'
-import { Game } from '../Definitions'
-import { backgroundTheme, darkerTextColor, defaultTheme, useStyles } from '../public/assets/styles/styles.web'
+import { getGamesOfTheWeek, organizeGame, getMyGames } from '../api/request/GameTestRequest'
+import { formatTimeToString } from '../components/DateManager'
+import { GameList } from '../components/GameList'
+import { GameHeader } from '../Definitions'
+import { backgroundTheme, darkerTextColor, useStyles } from '../public/assets/styles/styles.web'
 import PageBase from './PageBase'
 
 const games = [{
@@ -22,22 +22,22 @@ const games = [{
   location: "Sydney",
   date: new Date(),
   time: new Date(),
-  playerLevel: 0,
+  player_level: 0,
   passcode: null,
-  maxPlayers: null,
-  minPlayers: null,
-  customRules: "No hands",
+  max_players: null,
+  min_players: null,
+  custom_rules: "No hands",
   requirements: null,
   participants: 1
 }]
 
-export default function Home() {
+export default function HomeView() {
   const styles = useStyles()
   const [size, setSize] = useState(0)
-  const [loadingTodaysGames, setLoadingTodaysGames] = useState(true)
-  const [todaysGames, setTodaysGames] = useState<Game[]>([])
+  const [loadingMyGames, setLoadingMyGames] = useState(true)
+  const [myGames, setMyGames] = useState<GameHeader[]>([])
   const [loadingGamesOfTheWeek, setLoadingGamesOfTheWeek] = useState(true)
-  const [gamesOfTheWeek, setGamesOfTheWeek] = useState<Game[]>([])
+  const [gamesOfTheWeek, setGamesOfTheWeek] = useState<GameHeader[]>([])
   const [cookies, setCookie, removeCookie] = useCookies(['uid'])
 
   const [postDialog, openPostDialog] = useState(false)
@@ -45,13 +45,13 @@ export default function Home() {
   const [description, setDescription] = useState("")
   const [location, setLocation] = useState("")
   const [date, setDate] = useState<Date>(new Date())
-  const [time, setTime] = useState<Date>(new Date())
+  const [time, setTime] = useState(formatTimeToString(new Date()))
   const [playerLevel, setPlayerLevel] = useState(0)
-  const [passcode, setPasscode] = useState<string | null>(null)
-  const [maxPlayers, setMaxPlayers] = useState<number | null>(null)
-  const [minPlayers, setMinPlayers] = useState<number | null>(null)
-  const [customRules, setCustomRules] = useState<string | null>(null)
-  const [requirements, setRequirements] = useState<string | null>(null)
+  const [passcode, setPasscode] = useState<string | null>("")
+  const [maxPlayers, setMaxPlayers] = useState<number | null>(22)
+  const [minPlayers, setMinPlayers] = useState<number | null>(1)
+  const [customRules, setCustomRules] = useState<string | null>("")
+  const [requirements, setRequirements] = useState<string | null>("")
   const [posting, setPosting] = useState(false)
   const [showSnackbar, openSnackbar] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
@@ -59,7 +59,7 @@ export default function Home() {
   const [showSigninDialog, openSigninDialog] = useState(false)
 
   useEffect(() => {
-    getTodaysGames().then(games => setTodaysGames(games)).catch(error => console.log(error.message)).finally(() => setLoadingTodaysGames(false))
+    getMyGames(cookies.uid).then(games => setMyGames(games)).catch(error => console.log(error.message)).finally(() => setLoadingMyGames(false))
     getGamesOfTheWeek().then(games => setGamesOfTheWeek(games)).catch(error => console.log(error.message)).finally(() => setLoadingGamesOfTheWeek(false))
     function handleResize() {
       setSize((isMobile) ? window.innerWidth * 0.8 : window.innerWidth * 0.20)
@@ -69,44 +69,9 @@ export default function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, [])
 
-  function renderTodaysGame() {
-    if (todaysGames.length > 0)
-      return <ImageList style={{ marginTop: 16, marginBottom: 16, width: "100%", flexWrap: "nowrap" }} gap={5}>
-        {todaysGames.map(game => {
-          if (game.passcode)
-            return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
-              <Link href={"/game?id=" + game.id + "&needPasscode=true"}>
-                <Image src={"/assets/images/SoccerFieldLandscape.jpg"} width={size} height={200} />
-                <div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap" }}>
-                  <Typography style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                    {game.title}
-                  </Typography>
-                  <LockTwoTone style={{ color: "gray" }} />
-                </div>
-                <Typography style={{ color: darkerTextColor }}>
-                  {game.organizer.name}<br />
-                  {game.date}
-                </Typography>
-              </Link>
-            </ImageListItem>
-          else
-            return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
-              <Link href={"/game?id=" + game.id}>
-                <Image src={"/assets/images/SoccerFieldLandscape.jpg"} width={size} height={200} />
-                <Typography style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden" }}>
-                  {game.title}
-                </Typography>
-                <Typography style={{ color: darkerTextColor }}>
-                  {game.organizer.name}<br />
-                  {game.location}
-                </Typography>
-                <Typography style={{ display: "flex", flexDirection: "row", color: darkerTextColor }}>
-                  {game.date + " " + removeSecondsFromTime(game.time)}<div style={{ flex: 1 }} />{game.participants + " players joining"}
-                </Typography>
-              </Link>
-            </ImageListItem>
-        })}
-      </ImageList>
+  function renderMyGames() {
+    if (myGames.length > 0)
+      return <GameList games={myGames} size={size} />
     else
       return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
         No games are planned today
@@ -115,42 +80,7 @@ export default function Home() {
 
   function renderGamesOfTheWeek() {
     if (gamesOfTheWeek.length > 0)
-      return <ImageList style={{ marginTop: 16, marginBottom: 16, width: "100%", flexWrap: "nowrap" }} gap={5}>
-        {gamesOfTheWeek.map(game => {
-          if (game.passcode)
-            return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
-              <Link href={"/game?id=" + game.id + "&needPasscode=true"}>
-                <Image src={"/assets/images/SoccerFieldLandscape.jpg"} width={size} height={200} />
-                <div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap" }}>
-                  <Typography style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                    {game.title}
-                  </Typography>
-                  <LockTwoTone style={{ color: "gray" }} />
-                </div>
-                <Typography style={{ color: darkerTextColor }}>
-                  {game.organizer.name}<br />
-                  {game.date}
-                </Typography>
-              </Link>
-            </ImageListItem>
-          else
-            return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
-              <Link href={"/game?id=" + game.id}>
-                <Image src={"/assets/images/SoccerFieldLandscape.jpg"} width={size} height={200} />
-                <Typography style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden" }}>
-                  {game.title}
-                </Typography>
-                <Typography style={{ color: darkerTextColor }}>
-                  {game.organizer.name}<br />
-                  {game.location}
-                </Typography>
-                <Typography style={{ display: "flex", flexDirection: "row", color: darkerTextColor }}>
-                  {game.date + " " + removeSecondsFromTime(game.time)}<div style={{ flex: 1 }} />{game.participants + " players joining"}
-                </Typography>
-              </Link>
-            </ImageListItem>
-        })}
-      </ImageList>
+      return <GameList games={gamesOfTheWeek} size={size} />
     else
       return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
         No games are planned this week
@@ -180,20 +110,8 @@ export default function Home() {
                   'aria-label': 'change date',
                 }}
               />
-              {/* <KeyboardTimePicker
-                format="HH:mm"
-                margin="normal"
-                id="time-picker"
-                label="Time"
-                value={time}
-                onChange={(time: Date | null) => setTime(time!)}
-                KeyboardButtonProps={{
-                  'aria-label': 'change time',
-                }}
-                style={{ color: darkerTextColor }}
-              /> */}
             </MuiPickersUtilsProvider>
-            <TextField label="Time" variant="outlined" className={styles.formTextField} onChange={e => setTime(time)} defaultValue={formatTimeToString(time)} type="time" />
+            <TextField label="Time" variant="outlined" className={styles.formTextField} onChange={e => setTime(e.target.value)} defaultValue={time} type="time" />
             {/* <TextField id="datetime-local" label="Game schedule" variant="outlined" className={styles.formTextField} onChange={e => setDatetime(new Date(e.target.value))} value={format(datetime, "yyyy-MM-dd'T'HH:mm")} fullWidth type="datetime-local" /> */}
             <TextField label="Player level" variant="outlined" className={styles.formTextField} onChange={e => setPlayerLevel(parseInt(e.target.value))} value={playerLevel} fullWidth select>
               <MenuItem key={0} value={0}>Anyone</MenuItem>
@@ -202,7 +120,7 @@ export default function Home() {
               <MenuItem key={3} value={3}>Professional level</MenuItem>
             </TextField>
             <Typography variant="h5" style={{ marginTop: 16 }}>
-              Optional (Leave it blank to disable it)
+              Customize game (Optional)
             </Typography>
             <TextField label="Passcode (To make it private)" variant="outlined" className={styles.formTextField} onChange={e => setPasscode(e.target.value)} value={passcode} fullWidth />
             <TextField label="Max players" variant="outlined" className={styles.formTextField} onChange={e => setMaxPlayers(parseInt(e.target.value))} value={maxPlayers} fullWidth type="number" />
@@ -233,10 +151,10 @@ export default function Home() {
         </Dialog>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
-            TODAY'S GAMES
+            MY GAMES
           </Typography>
         </div>
-        {(loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderTodaysGame()}
+        {(loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderMyGames()}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
             GAMES THIS WEEK

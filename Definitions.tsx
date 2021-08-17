@@ -1,31 +1,46 @@
 export const appName = "Soccer Web Platform"
 
+export const landscapeFieldImgURI = "/assets/images/SoccerFieldLandscape.jpg"
+
+/*
+    The types are using snake case to obey database column names
+*/
+
 export type Player = {
     uid: string,
     name: string,
     bio: string
-    thumbnailUrl: string | null,
-    localArea: string | null,
+    thumbnail_url: string | null,
+    local_area: string | null,
     position: string,
-    warningScore: number
-    blockedPlayers: Player[] | null,
-    lastOnline: Date | any
+    warning_score: number
+    blocked_players: Player[] | null,
+    last_online: Date | any
+    is_private: boolean
+}
+
+export type SimpleProfile = {
+    uid: string
+    name: string
+    thumbnail_url: string
+    position?: string
+    is_private?: boolean
 }
 
 export type Game = {
     id: string
-    organizer: Player,
+    organizer: Player | SimpleProfile,
     title: string,
     description: string,
     location: string,
     date: Date
     time: Date
-    playerLevel: number,
-    passcode: string | null
+    player_level: number,
+    passcode: string
     participants: number
-    maxPlayers: number | null
-    minPlayers: number | null
-    customRules: string | null
+    max_players: number | null
+    min_players: number | null
+    custom_rules: string | null
     requirements: string | null
     status: string | null
 }
@@ -38,6 +53,27 @@ export type GameMetaData = {
     passcode: boolean
 }
 
+export type GameHeader = {
+    id: string
+    organizer: Player | SimpleProfile
+    title: string
+    location: string
+    date: Date
+    time: Date
+    player_level: number
+    passcode: string | null
+    participants: number
+    status: string
+}
+
+export type Message = {
+    id: string
+    game_id: string
+    sender: SimpleProfile
+    content: any
+    timestamp: Date
+}
+
 export type Manager = {
     uid: string,
     name: string,
@@ -45,7 +81,7 @@ export type Manager = {
     teamName: string,
     willPlayAsWell: boolean,
     position: string | null
-    warningScore: number
+    warning_score: number
 }
 
 export type Team = {
@@ -58,7 +94,7 @@ export type Team = {
     requirements: string,
     openToPublic: boolean
     lookingPlayers: boolean
-    blockedPlayers: Player[]
+    blocked_players: Player[]
     trainingDates: string | null
     leagueDivision: string | null
 }

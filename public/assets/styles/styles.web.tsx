@@ -12,6 +12,10 @@ export const darkerTextColor = "#272c58"
 
 export const brighterBlueTextColor = "#6a9cd4"
 
+export const themeColor = backgroundTheme
+
+export const borderColor = backgroundTheme
+
 export const defaultTextColor = brighterBlueTextColor
 
 export const goldColor = "#f8b00d"

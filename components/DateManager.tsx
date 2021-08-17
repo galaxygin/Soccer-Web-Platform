@@ -14,6 +14,13 @@ export function getSundayOfTheWeek(): Date {
     return new Date(d.setDate(diff));
 }
 
+export function getNextMonday(): Date {
+    const d = new Date();
+    var day = d.getDay(),
+        diff = d.getDate() + day + 7 + (day == 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
+}
+
 export function formatDateToString(date: Date): string {
     return format(date, "yyyy-MM-dd")
 }

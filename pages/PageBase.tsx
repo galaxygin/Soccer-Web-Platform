@@ -53,7 +53,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
         if (getUser())
             getProfile(cookies.uid).then(player => {
                 if (player)
-                    setThumbnailUrl(player.thumbnailUrl)
+                    setThumbnailUrl(player.thumbnail_url)
             }).catch(error => console.log(error.message))
         setWidth(window.innerWidth)
         setHeight(window.innerHeight)
@@ -310,7 +310,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
 
     if (isMobile) {
         return (
-            <div className={styles.root} >
+            <div className={styles.root} style={{ overflow: "hidden" }}>
                 {header}
                 <AppBar position="fixed" >
                     <Toolbar>
@@ -330,7 +330,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         </IconButton>
                     </Toolbar>
                 </AppBar>
-                <div style={{ display: "flex", flexDirection: "column", width: "100%", height: height }}>
+                <div style={{ display: "flex", flexDirection: "column", width: "100%", height: height, overflow: "hidden" }}>
                     <main style={{ backgroundColor: defaultTheme, width: "100%", overflow: "scroll" }}>
                         <div className={styles.drawerHeader} />
                         {signinDialog()}
@@ -381,7 +381,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 <main style={{ width: width, display: 'flex', flexDirection: 'column' }}>
                     <div className={styles.drawerHeader} />
                     {signinDialog()}
-                    <div style={{ display: "flex" }}>
+                    <div style={{ display: "flex", overflow: "scroll" }}>
                         <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
                             <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/")}>
                                 Home <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
@@ -396,10 +396,10 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                 Search <Search style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
                             </Typography>
                         </div>
-                        <div style={{ width: "50%", height: height - 70, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme }}>
+                        <div style={{ width: "50%", height: height - 70, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme, overflow: "scroll" }}>
                             {content}
                         </div>
-                        <div style={{ width: "25%", display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ width: "25%", display: 'flex', flexDirection: 'column', overflow: "scroll" }}>
                             {detailView}
                         </div>
                     </div>
