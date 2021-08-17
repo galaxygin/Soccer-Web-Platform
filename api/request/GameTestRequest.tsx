@@ -73,7 +73,7 @@ export async function organizeGame(uid: string, title: string, description: stri
     if (error)
         throw error
     let { data: game_id } = await supabase.from("test_games").select("id").order('timestamp', { ascending: false }).eq('organizer', uid)
-    await supabase.from("participants").insert({ id: game_id![0].id, game_id: game_id![0].id, uid: uid })
+    await supabase.from("test_participants").insert({ game_id: game_id![0].id, uid: uid })
     return data
 }
 
@@ -108,7 +108,7 @@ export async function joinAGame(game_id: string, uid: string) {
     if (error)
         throw error
     let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
-    await supabase.from("games").update({ participants: participants!.length + 1 })
+    await supabase.from("test_games").update({ participants: participants!.length + 1 })
     return data
 }
 
@@ -117,7 +117,7 @@ export async function cancelRSVP(game_id: string, uid: string) {
     if (error)
         throw error
     let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
-    await supabase.from("games").update({ participants: participants!.length - 1 })
+    await supabase.from("test_games").update({ participants: participants!.length - 1 })
     return data
 }
 

@@ -73,7 +73,7 @@ export async function organizeGame(uid: string, title: string, description: stri
     if (error)
         throw error
     let { data: game_id } = await supabase.from("games").select("id").order('timestamp', { ascending: false }).eq('organizer', uid)
-    await supabase.from("participants").insert({ id: game_id![0].id, game_id: game_id![0].id, uid: uid })
+    await supabase.from("participants").insert({ game_id: game_id![0].id, uid: uid })
     return data
 }
 

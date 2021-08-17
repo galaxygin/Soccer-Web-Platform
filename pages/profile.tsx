@@ -11,13 +11,14 @@ import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icon
 import { Alert } from "@material-ui/lab";
 import { updateThumbnail } from "../components/UserDataManager";
 
-export default function Profile() {
+export default function ProfileView() {
     const styles = useStyles()
     const router = useRouter()
     const [player, setPlayer] = useState<Player | null>(null)
     const [cookies, setCookie, removeCookie] = useCookies(['uid'])
     const [loading, setLoading] = useState(true)
     const [width, setWidth] = useState(0)
+    const [height, setHeight] = useState(0)
     const [showSnackbar, openSnackbar] = useState(false)
 
     const [editingProfile, changingProfile] = useState(false)
@@ -39,12 +40,16 @@ export default function Profile() {
 
     useEffect(() => {
         setWidth(window.innerWidth)
+        setHeight(window.innerHeight)
+    }, [])
+
+    useEffect(() => {
         if (router.query.uid) {
             updateInfo()
             return
         }
         setLoading(false)
-    }, [])
+    }, [router.query.uid])
 
     function updateInfo() {
         getProfile(router.query.uid as string).then(player => {

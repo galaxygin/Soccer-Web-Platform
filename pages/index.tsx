@@ -1,6 +1,6 @@
 import DateFnsUtils from '@date-io/date-fns'
-import { Fab, Dialog, Typography, DialogTitle, DialogContent, DialogActions, Button, TextField, Snackbar, MenuItem, CircularProgress } from '@material-ui/core'
-import { AddTwoTone } from '@material-ui/icons'
+import { Fab, Dialog, Typography, DialogTitle, DialogContent, DialogActions, Button, TextField, Snackbar, MenuItem, CircularProgress, AppBar, IconButton, Toolbar } from '@material-ui/core'
+import { AddTwoTone, Close } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
 import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import React, { useState, useEffect } from 'react'
@@ -10,6 +10,7 @@ import { getUser } from '../api/request/AuthRequest'
 import { getGamesOfTheWeek, organizeGame, getMyGames } from '../api/request/GameTestRequest'
 import { formatTimeToString } from '../components/DateManager'
 import { GameList } from '../components/GameList'
+import OrganizeForm from '../components/OrganizeForm'
 import { GameHeader } from '../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../public/assets/styles/styles.web'
 import PageBase from './PageBase'
@@ -90,6 +91,17 @@ export default function HomeView() {
     return (
       <div style={{ paddingTop: 16 }}>
         <Dialog open={postDialog} onClose={() => openPostDialog(false)} fullScreen>
+          {/* <AppBar style={{ position: "relative" }}>
+            <Toolbar>
+              <IconButton edge="start" color="inherit" onClick={() => openPostDialog(false)} aria-label="close">
+                <Close />
+              </IconButton>
+              <Typography variant="h6" style={{ flex: 1 }}>
+                Participants
+              </Typography>
+            </Toolbar>
+          </AppBar> */}
+          {/* <OrganizeForm uid={cookies.uid} _title={title} _description={description} /> */}
           <DialogTitle>Organize a game</DialogTitle>
           <DialogContent>
             {(errorMsg) ? <Alert severity="error">{errorMsg}</Alert> : null}
@@ -149,33 +161,29 @@ export default function HomeView() {
             }}>Post</Button>}
           </DialogActions>
         </Dialog>
-        <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
           MY GAMES
         </Typography>
         {(loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderMyGames()}
-        <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
           GAMES THIS WEEK
         </Typography>
         {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
         <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
           <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
         </Snackbar>
-        <Fab aria-label={"Add"} style={{
-          position: 'absolute',
-          bottom: 80,
-          right: (isMobile) ? 30 : 550,
-          backgroundColor: backgroundTheme,
-          color: "white"
-        }} onClick={() => {
-          if (getUser()) {
+        {(getUser()) ?
+          <Fab aria-label={"Add"} style={{
+            position: 'absolute',
+            bottom: 80,
+            right: (isMobile) ? 30 : 550,
+            backgroundColor: backgroundTheme,
+            color: "white"
+          }} onClick={() => {
             openPostDialog(true)
-          } else {
-            // EventRegister.emit('wanna open signin dialog', true)
-          }
-          openPostDialog(true)
-        }}>
-          {<AddTwoTone />}
-        </Fab>
+          }}>
+            {<AddTwoTone />}
+          </Fab> : null}
       </div >
     )
   }

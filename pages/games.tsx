@@ -149,37 +149,29 @@ export default function GamesView() {
                         }}>Post</Button>}
                     </DialogActions>
                 </Dialog>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
-                        TODAY'S GAMES
-                    </Typography>
-                </div>
+                <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    TODAY'S GAMES
+                </Typography>
                 {(loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderTodaysGame()}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester" }}>
-                        GAMES THIS WEEK
-                    </Typography>
-                </div>
+                <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    GAMES THIS WEEK
+                </Typography>
                 {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
                 <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
                     <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
                 </Snackbar>
-                <Fab aria-label={"Add"} style={{
-                    position: 'absolute',
-                    bottom: 80,
-                    right: (isMobile) ? 30 : 550,
-                    backgroundColor: backgroundTheme,
-                    color: "white"
-                }} onClick={() => {
-                    if (getUser()) {
+                {(getUser()) ?
+                    <Fab aria-label={"Add"} style={{
+                        position: 'absolute',
+                        bottom: 80,
+                        right: (isMobile) ? 30 : 550,
+                        backgroundColor: backgroundTheme,
+                        color: "white"
+                    }} onClick={() => {
                         openPostDialog(true)
-                    } else {
-                        // EventRegister.emit('wanna open signin dialog', true)
-                    }
-                    openPostDialog(true)
-                }}>
-                    {<AddTwoTone />}
-                </Fab>
+                    }}>
+                        {<AddTwoTone />}
+                    </Fab> : null}
             </div >
         )
     }
