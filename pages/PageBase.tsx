@@ -16,10 +16,12 @@ interface props {
     content: JSX.Element,
     detailView?: JSX.Element,
     wannaShowSigninDialog?: boolean
+    closingSigninDialog?: boolean
     header?: JSX.Element
+    region?: string
 }
 
-export default function PageBase({ content, detailView, wannaShowSigninDialog = false, header = <Header /> }: props) {
+export default function PageBase({ content, detailView, wannaShowSigninDialog = false, header = <Header />, region = "au" }: props) {
     const styles = useStyles()
     const drawerStyle = drawerStyles()
     const router = useRouter()
@@ -28,6 +30,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
     const [cookies, setCookie, removeCookie] = useCookies(['uid'])
+    const [selectedRegion, setRegion] = useState(region)
 
     const [showSetupDialog, openSetupDialog] = useState(false)
     const [name, setName] = useState("")
@@ -39,7 +42,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [thumbLoading, setThumbLoading] = useState(false)
     const [errorThumbMsg, setErrorThumbMsg] = useState(null)
 
-    const [showSigninDialog, openSigninDialog] = useState(false)
+    const [showSigninDialog, openSigninDialog] = useState(wannaShowSigninDialog)
     const [authSuccessMsg, setAuthSuccessMsg] = useState("")
     const [authErrorMsg, setAuthErrorMsg] = useState("")
     const [email, setEmail] = useState("")
@@ -77,6 +80,10 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     useEffect(() => {
         console.log(getUser())
     }, [getUser()])
+
+    useEffect(() => {
+        router.push("../" + selectedRegion)
+    }, [selectedRegion])
 
     const menuId = 'primary-search-account-menu';
     const handleMenuClose = () => {
@@ -406,20 +413,28 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 <main style={{ width: width, display: 'flex', flexDirection: 'column' }}>
                     <div className={styles.drawerHeader} />
                     {signinDialog()}
-                    <div style={{ display: "flex", overflow: "scroll" }}>
+                    <div style={{ display: "flex" }}>
                         <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/")}>
-                                Home <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion)}>
+                                {(selectedRegion == "au") ? "Home" : "ホーム"} <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
                             </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("games")}>
-                                Games <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/games")}>
+                                {(selectedRegion == "au") ? "Games" : "ゲーム"} <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
                             </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("tournaments")}>
-                                Tournament <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/tournaments")}>
+                                {(selectedRegion == "au") ? "Tournaments" : "トーナメント"} <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
                             </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("search")}>
+                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/search")}>
                                 Search <Search style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
                             </Typography>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
+                                ©️ AIZero Inc. 2021     {(selectedRegion == "au") ? "Region" : "国"}<TextField onChange={e => {
+                                    setRegion(e.target.value)
+                                }} value={selectedRegion} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
+                                    <MenuItem key="australia" value="au">Australia</MenuItem>
+                                    <MenuItem key="japan" value="jp">日本</MenuItem>
+                                </TextField>
+                            </div>
                         </div>
                         <div style={{ width: "50%", height: height - 70, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme, overflow: "scroll" }}>
                             {content}

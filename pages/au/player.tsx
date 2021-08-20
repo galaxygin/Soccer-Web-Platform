@@ -1,15 +1,15 @@
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { getProfile, updateProfile } from "../api/request/UserRequest";
-import { landscapeFieldImgURI, Player } from "../Definitions";
-import PageBase from "./PageBase";
+import { getProfile, updateProfile } from "../../api/request/UserRequest";
+import { landscapeFieldImgURI, Player } from "../../Definitions";
+import PageBase from "../PageBase";
 import Image from 'next/image'
-import { darkerTextColor, defaultTheme, useStyles } from "../public/assets/styles/styles.web";
+import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
 import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { updateThumbnail } from "../components/UserDataManager";
+import { updateThumbnail } from "../../components/UserDataManager";
 
 export default function PlayerView() {
     const styles = useStyles()

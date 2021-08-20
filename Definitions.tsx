@@ -38,8 +38,8 @@ export type Game = {
     player_level: number,
     passcode: string
     participants: number
-    max_players: number | null
-    min_players: number | null
+    max_players: number
+    min_players: number
     custom_rules: string | null
     requirements: string | null
     status: string | null
@@ -130,5 +130,18 @@ export const getPlayerLevel = (level: number) => {
             return "Professional level"
         default:
             return "Anyone"
+    }
+}
+
+export const getPlayerLevelJP = (level: number) => {
+    switch (level) {
+        case 1:
+            return "普通"
+        case 2:
+            return "上級"
+        case 3:
+            return "プロレベル"
+        default:
+            return "誰でも"
     }
 }

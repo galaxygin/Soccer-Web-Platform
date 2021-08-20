@@ -1,15 +1,15 @@
 import { Button, CircularProgress, IconButton, List, ListItem, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { landscapeFieldImgURI, SimpleProfile } from "../Definitions";
+import { landscapeFieldImgURI, SimpleProfile } from "../../Definitions";
 import Image from 'next/image'
-import { backgroundTheme, darkerTextColor, useStyles } from "../public/assets/styles/styles.web";
+import { backgroundTheme, darkerTextColor, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
 import { AccountCircle, LockTwoTone, RefreshTwoTone } from "@material-ui/icons";
-import { getParticipants } from "../api/request/GameTestRequest";
+import { getParticipants } from "../../api/request/GameTestRequest";
 import { RealtimeSubscription } from "@supabase/supabase-js";
-import { supabase } from "../SupabaseManager";
-import { getSimpleProfile } from "../api/request/UserRequest";
+import { supabase } from "../../SupabaseManager";
+import { getSimpleProfile } from "../../api/request/UserRequest";
 
 interface props {
     game_id: string
@@ -30,7 +30,7 @@ export default function ParticipantsView({ game_id }: props) {
 
     useEffect(() => {
         var subscription: RealtimeSubscription
-        subscription = supabase.from('participants:game_id=eq.' + game_id)
+        subscription = supabase.from('test_participants:game_id=eq.' + game_id)
             .on('INSERT', payload => {
                 getSimpleProfile(payload.new.uid).then(user => setParticipants(prevState => [...prevState, { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url, position: user.position, is_private: user.is_private }]))
             }).on('DELETE', payload => {
@@ -74,7 +74,7 @@ export default function ParticipantsView({ game_id }: props) {
                     </div>
                     <List>
                         {participants.map(player => (
-                            <ListItem key={player.uid} onClick={() => router.push({ pathname: "player", query: { uid: player.uid } })}>
+                            <ListItem key={player.uid} onClick={() => router.push({ pathname: "/au/player", query: { uid: player.uid } })}>
                                 <Typography component={"div"} style={{ display: "flex", flexDirection: "row" }}>
                                     {(player.thumbnail_url) ? <img src={player.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                     <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16 }}>

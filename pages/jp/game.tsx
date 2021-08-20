@@ -1,22 +1,21 @@
-import DateFnsUtils from '@date-io/date-fns'
-import { CircularProgress, Button, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Snackbar, IconButton, MenuItem, AppBar, Toolbar, Typography, List, ListItem } from '@material-ui/core'
+import { CircularProgress, Button, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Snackbar, IconButton, AppBar, Toolbar, Typography, List, ListItem } from '@material-ui/core'
 import { Close, Edit, LockTwoTone, SendTwoTone, AccountCircle, DeleteTwoTone } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
-import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import { RealtimeSubscription } from '@supabase/realtime-js'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useState, useEffect } from 'react'
 import { useCookies } from 'react-cookie'
 import { isMobile } from 'react-device-detect'
-import { cancelRSVP, checkIsAlreadyJoining, getGame, getGameMetaData, getGameWithPasscode, joinAGame, updateGameDetail, cancelGame, getChatMessages, sendChatMessage, deleteChatMessage } from '../api/request/GameTestRequest'
-import { getSimpleProfile } from '../api/request/UserRequest'
-import { formatDateToString, formatTimeToString, removeSecondsFromTime } from '../components/DateManager'
-import { Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from '../Definitions'
-import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../public/assets/styles/styles.web'
-import { supabase } from '../SupabaseManager'
-import Header from './Header'
-import PageBase from './PageBase'
+import { cancelRSVP, checkIsAlreadyJoining, getGame, getGameMetaData, getGameWithPasscode, joinAGame, getChatMessages, sendChatMessage, deleteChatMessage } from '../../api/request/GameTestRequest'
+import { getSimpleProfile } from '../../api/request/UserRequest'
+import { formatDateToString, formatTimeToString, removeSecondsFromTime } from '../../components/DateManager'
+import OrganizeFormAU from '../../components/OrganizeForm'
+import { Game, GameMetaData, getPlayerLevelJP, landscapeFieldImgURI, Message } from '../../Definitions'
+import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../../public/assets/styles/styles.web'
+import { supabase } from '../../SupabaseManager'
+import Header from '../Header'
+import PageBase from '../PageBase'
 import ParticipantsView from './participants'
 
 const sample_game = {
@@ -60,18 +59,6 @@ export default function GameView({ metadata }: props) {
     const [joinError, setJoinError] = useState(null)
 
     const [showEditDialog, openEditDialog] = useState(false)
-    const [title, setTitle] = useState("")
-    const [description, setDescription] = useState("")
-    const [location, setLocation] = useState("")
-    const [date, setDate] = useState<Date>(new Date())
-    const [time, setTime] = useState("")
-    const [playerLevel, setPlayerLevel] = useState(0)
-    const [maxPlayers, setMaxPlayers] = useState<number | null>(null)
-    const [minPlayers, setMinPlayers] = useState<number | null>(null)
-    const [customRules, setCustomRules] = useState<string | null>(null)
-    const [requirements, setRequirements] = useState<string | null>(null)
-    const [editLoading, setEditLoading] = useState(false)
-    const [editError, setEditError] = useState(null)
 
     const [showParticipants, openParticipants] = useState(false)
 
@@ -87,18 +74,21 @@ export default function GameView({ metadata }: props) {
         if (metadata) {
             if (metadata.organizer == cookies.uid) {
                 reloadDetails()
+                loadChat()
                 return
             }
             checkIsAlreadyJoining(metadata.id, cookies.uid).then(result => {
                 setJoining(result)
                 if (result) {
                     reloadDetails()
+                    loadChat()
                 } else
                     if (metadata.passcode) {
                         setLoading(false)
                         openPassDialog(true)
                     } else {
                         reloadDetails()
+                        loadChat()
                     }
             }).catch(error => setErrorMsg(error.message))
             setWidth(window.innerWidth)
@@ -127,19 +117,7 @@ export default function GameView({ metadata }: props) {
         setLoading(true)
         getGame(metadata!.id).then(game => {
             setGame(game)
-            setTitle(game.title)
-            setDescription(game.description)
-            setLocation(game.location)
-            setDate(new Date(game.date))
-            setTime(game.time.toString())
-            setPlayerLevel(game.player_level)
-            setPasscode(game.passcode)
-            setMaxPlayers(game.max_players)
-            setMinPlayers(game.min_players)
-            setCustomRules(game.custom_rules)
-            setRequirements(game.requirements)
         }).catch(error => setErrorMsg(error.message)).finally(() => setLoading(false))
-        loadChat()
     }
 
     function loadChat() {
@@ -183,16 +161,17 @@ export default function GameView({ metadata }: props) {
             return (
                 <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                     <Dialog open={showJoinConfirmDialog} fullWidth>
-                        <DialogTitle>Consent</DialogTitle>
+                        <DialogTitle>確認</DialogTitle>
                         <DialogContent>
-                            Do you want to join this game?<br />
-                            By joining this game, you must follow the rules and requirement of the game.<br />
-                            Also, if you do any of the following during the game, you'll get warning score that gives you step by step restrictions<br />
-                            ・No show<br />
-                            ・Violence<br />
-                            ・Harrassment<br />
-                            ・Racism<br />
-                            ・Breaching the rules<br />
+                            このゲームに参加しますか?<br />
+                            このゲームに参加する事で、ゲームのルールと要件に同意した事になります。<br />
+                            また、参加中の以下の行為を行うと警告スコアが増加し段階的な規制が行われます。<br />
+                            ・姿を見せない<br />
+                            ・暴力<br />
+                            ・ハラスメント<br />
+                            ・差別<br />
+                            ・ルールに従わない<br />
+                            ・その他、主催者が問題と認識した行為<br />
                             {(joinError) ? <Alert severity="error">{joinError}</Alert> : null}<br />
                         </DialogContent>
                         <DialogActions>
@@ -206,77 +185,18 @@ export default function GameView({ metadata }: props) {
                                     setSnackMsg("Joined the game successfully")
                                     openSnackbar(true)
                                 }).catch(error => setJoinError(error.message)).finally(() => setJoinLoading(false))
-                            }}>Join</Button>}
+                            }}>参加する</Button>}
                         </DialogActions>
                     </Dialog>
-                    <Dialog open={showEditDialog} onClose={() => openEditDialog(false)} fullScreen>
-                        <AppBar style={{ position: "relative" }}>
-                            <Toolbar>
-                                <IconButton edge="start" color="inherit" onClick={() => openEditDialog(false)} aria-label="close">
-                                    <Close />
-                                </IconButton>
-                                <Typography variant="h6" style={{ flex: 1 }}>
-                                    Update game details
-                                </Typography>
-                                {(editLoading) ? <CircularProgress style={{ color: backgroundTheme }} /> : <Button style={{ backgroundColor: "white", color: "red" }} onClick={() => {
-                                    setEditLoading(true)
-                                    updateGameDetail(game.id, title, description, location, date!, time!, playerLevel, passcode, maxPlayers, minPlayers, customRules, requirements).then(() => {
-                                        openEditDialog(false)
-                                        setTitle("")
-                                        setDescription("")
-                                        setLocation("")
-                                        setPlayerLevel(0)
-                                        setPasscode("")
-                                        setMaxPlayers(null)
-                                        setMinPlayers(null)
-                                        setCustomRules(null)
-                                        setRequirements(null)
-                                        setSnackMsg("The game details updated successfully")
-                                        reloadDetails()
-                                        openSnackbar(true)
-                                    }).catch(error => setEditError(error.message)).finally(() => setEditLoading(false))
-                                }}>Update</Button>}
-                            </Toolbar>
-                        </AppBar>
-                        <DialogContent>
-                            {(editError) ? <Alert severity="error">{editError}</Alert> : null}
-                            <TextField label="Title" variant="outlined" className={styles.formTextField} onChange={e => setTitle(e.target.value)} value={title} fullWidth />
-                            <TextField label="Description" variant="outlined" className={styles.formTextField} onChange={e => setDescription(e.target.value)} value={description} fullWidth multiline minRows={4} />
-                            <TextField label="Location" variant="outlined" className={styles.formTextField} onChange={e => setLocation(e.target.value)} value={location} fullWidth />
-                            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                                <KeyboardDatePicker
-                                    disableToolbar
-                                    variant="inline"
-                                    format="yyyy-MM-dd"
-                                    margin="normal"
-                                    id="date-picker-inline"
-                                    label="Date"
-                                    value={date}
-                                    onChange={(date: Date | null) => setDate(date!)}
-                                    KeyboardButtonProps={{
-                                        'aria-label': 'change date',
-                                    }}
-                                />
-                            </MuiPickersUtilsProvider>
-                            <TextField label="Time" variant="outlined" className={styles.formTextField} onChange={e => setTime(e.target.value)} defaultValue={time} type="time" />
-                            <TextField label="Player level" variant="outlined" className={styles.formTextField} onChange={e => setPlayerLevel(parseInt(e.target.value))} value={playerLevel} fullWidth select>
-                                <MenuItem key={0} value={0}>Anyone</MenuItem>
-                                <MenuItem key={1} value={1}>Mid level</MenuItem>
-                                <MenuItem key={2} value={2}>High level</MenuItem>
-                                <MenuItem key={3} value={3}>Professional level</MenuItem>
-                            </TextField>
-                            <Typography variant="h5" style={{ marginTop: 16 }}>
-                                Optional (Leave it blank to disable it)
-                            </Typography>
-                            <TextField label="Passcode (To make it private)" variant="outlined" className={styles.formTextField} onChange={e => setPasscode(e.target.value)} value={passcode} fullWidth />
-                            <TextField label="Max players" variant="outlined" className={styles.formTextField} onChange={e => setMaxPlayers(parseInt(e.target.value))} value={maxPlayers} fullWidth type="number" />
-                            <TextField label="Min players" variant="outlined" className={styles.formTextField} onChange={e => setMinPlayers(parseInt(e.target.value))} value={minPlayers} fullWidth type="number" />
-                            <TextField label="Custom rules" variant="outlined" className={styles.formTextField} onChange={e => setCustomRules(e.target.value)} value={customRules} fullWidth multiline minRows={4} />
-                            <TextField label="Requirements" variant="outlined" className={styles.formTextField} onChange={e => setRequirements(e.target.value)} value={requirements} fullWidth multiline minRows={4} />
-                            <Typography style={{ marginTop: 32 }}>Once the game is cancelled, it can't be undone</Typography>
-                            <Button style={{ width: "100%", marginTop: 8, marginBottom: 32, backgroundColor: "red", color: "white" }} onClick={() => cancelGame(game.id).then(() => openEditDialog(false))}>Cancel game</Button>
-                        </DialogContent>
-                    </Dialog>
+                    <OrganizeFormAU show={showEditDialog} uid={cookies.uid} game_id={game.id} _title={game.title} _description={game.description} _location={game.location} _date={new Date(game.date)} _time={game.time.toString()} _playerLevel={game.player_level} _passcode={passcode} _maxPlayers={game.max_players} _minPlayers={game.min_players} _customRules={game.custom_rules} _requirements={game.requirements} editing posted={() => {
+                        openEditDialog(false)
+                        setSnackMsg("The game details updated successfully")
+                        reloadDetails()
+                        openSnackbar(true)
+                    }} onClose={() => openEditDialog(false)} onCancelled={() => {
+                        setGame(prevState => ({ ...prevState!, status: "cancelled" }))
+                        openEditDialog(false)
+                    }} />
                     <Dialog open={showParticipants} onClick={() => openParticipants(false)} fullScreen>
                         <AppBar style={{ position: "relative" }}>
                             <Toolbar>
@@ -284,7 +204,7 @@ export default function GameView({ metadata }: props) {
                                     <Close />
                                 </IconButton>
                                 <Typography variant="h6" style={{ flex: 1 }}>
-                                    Participants
+                                    参加者
                                 </Typography>
                             </Toolbar>
                         </AppBar>
@@ -296,29 +216,29 @@ export default function GameView({ metadata }: props) {
                             <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
                                 {game.title}
                             </Typography>
-                            {(game.organizer.uid == cookies.uid && game.status != "cancelled" && new Date() < new Date(game?.date + " " + game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48 }} onClick={() => openEditDialog(true)}>
+                            {(game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
+                            {(game.organizer.uid == cookies.uid && game.status != "cancelled" && new Date() < new Date(game?.date + " " + game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => openEditDialog(true)}>
                                 <Edit style={{ color: "white" }} />
                             </IconButton> : null}
-                            {(game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
                         </div>
                         <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "player", query: { uid: game.organizer.uid } })}>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/jp/player", query: { uid: game.organizer.uid } })}>
                                 {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
                                     <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
                                         {game.organizer.name}
                                     </div>
-                                    Organizer
+                                    主催者
                                 </div>
                             </div>
                             {game.description}<br />
-                            Location: {game.location}<br />
-                            Date: {game.date + " " + removeSecondsFromTime(game.time)}<br />
-                            Level: {getPlayerLevel(game.player_level)}<br />
-                            {(game.max_players) ? <>Max players: {game.max_players}<br /></> : null}
+                            場所: {game.location}<br />
+                            日時: {game.date + " " + removeSecondsFromTime(game.time)}<br />
+                            レベル: {getPlayerLevelJP(game.player_level)}<br />
+                            {(game.max_players) ? <>最大人数: {game.max_players}<br /></> : null}
                             {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
                                 <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => openParticipants(true)}>
-                                    Current players ({game.participants})
+                                    参加者 ({game.participants})
                                 </Button>
                             </div> : null}
                             {renderByStatus()}
@@ -326,8 +246,8 @@ export default function GameView({ metadata }: props) {
                     </Typography>
                     <div>
                         <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                            <TextField disabled={(game.status == "cancelled" && new Date(game?.date + " " + game?.time) < new Date())} label="Send message to participants" variant="outlined" className={styles.formTextField} onChange={e => setMessage(e.target.value)} value={message} fullWidth style={{ marginTop: 0 }} />
-                            {(sending) ? <CircularProgress /> : <IconButton disabled={(game.status == "cancelled" && new Date(game?.date + " " + game?.time) < new Date())} onClick={() => {
+                            <TextField label="参加者にメッセージを送る" variant="outlined" className={styles.formTextField} onChange={e => setMessage(e.target.value)} value={message} fullWidth style={{ marginTop: 0 }} />
+                            {(sending) ? <CircularProgress /> : <IconButton onClick={() => {
                                 setSending(true)
                                 sendChatMessage(game.id, cookies.uid, message).then(() => { setMessage(""); }).catch(error => console.log(error.message)).finally(() => setSending(false))
                             }}>
@@ -370,15 +290,15 @@ export default function GameView({ metadata }: props) {
                 return (
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                         <Dialog open={showPassDialog} fullScreen>
-                            <DialogTitle>Passcode required</DialogTitle>
+                            <DialogTitle>パスコードが必要です</DialogTitle>
                             <DialogContent>
-                                This game requires passcode to see the details.<br />
-                                Please enter the passcode you are provided.<br /><br />
+                                このゲームの詳細を閲覧する為にはパスコードが必要です。<br />
+                                提供されたパスコードを入力してください。<br /><br />
                                 {(passErrorMsg) ? <Alert severity="error">{passErrorMsg}</Alert> : null}<br />
                                 <TextField label="Passcode" variant="outlined" className={styles.formTextField} onChange={e => setPasscode(e.target.value)} value={passcode} fullWidth />
                             </DialogContent>
                             <DialogActions>
-                                <Button onClick={() => router.back()}>Go back</Button>
+                                <Button onClick={() => router.back()}>戻る</Button>
                                 <div style={{ flexGrow: 1 }} />
                                 {(authenticating) ? <CircularProgress /> : <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
                                     setAuthenticating(true)
@@ -392,12 +312,12 @@ export default function GameView({ metadata }: props) {
                                             setPassErrorMsg("Could not get game detail. Check the passcode or network.")
                                         }
                                     }).catch(error => setPassErrorMsg(error.message)).finally(() => setAuthenticating(false))
-                                }}>Proceed</Button>}
+                                }}>進む</Button>}
                             </DialogActions>
                         </Dialog>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             {(errorMsg) ? <Alert severity="error">{errorMsg}</Alert> : null}<br />
-                            Couldn't get game details.
+                            ゲーム詳細の取得に失敗しました。
                         </Typography>
                     </div >
                 )
@@ -405,9 +325,9 @@ export default function GameView({ metadata }: props) {
     }
 
     if (isMobile) {
-        return <PageBase content={content()} header={<Header title={(game) ? game.title : "Private or couldn't get title"} description={(game) ? game.description : "Private or couldn't get description"} />} />
+        return <PageBase content={content()} header={<Header title={(game) ? game.title : "Private or couldn't get title"} description={(game) ? game.description : "Private or couldn't get description"} />} region={"jp"} />
     } else {
-        return <PageBase content={content()} detailView={(game) ? <ParticipantsView game_id={game.id} /> : <div />} header={<Header title={(game) ? game.title : "Private or couldn't get title"} description={(game) ? game.description : "Private or couldn't get description"} />} />
+        return <PageBase content={content()} detailView={(game) ? <ParticipantsView game_id={game.id} /> : <div />} header={<Header title={(game) ? game.title : "Private or couldn't get title"} description={(game) ? game.description : "Private or couldn't get description"} />} region={"jp"} />
     }
 }
 

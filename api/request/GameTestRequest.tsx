@@ -1,4 +1,4 @@
-import { formatDateToString, getMondayOfTheWeek, getNextMonday } from "../../components/DateManager";
+import { formatDateToString, formatTimeToString, getMondayOfTheWeek, getNextMonday } from "../../components/DateManager";
 import { Game, GameHeader, GameMetaData, Message, SimpleProfile } from "../../Definitions";
 import { supabase } from "../../SupabaseManager";
 
@@ -27,6 +27,23 @@ export async function getTodaysGames(): Promise<GameHeader[]> {
 
 export async function getGamesOfTheWeek(): Promise<GameHeader[]> {
     const { data, error } = await supabase.from("test_games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("date", "gte", formatDateToString(getMondayOfTheWeek())).filter("date", "lt", formatDateToString(getNextMonday())).order("date", { ascending: true }).order("time", { ascending: true })
+    if (error)
+        throw error
+    const games: GameHeader[] = []
+    data?.forEach(game => {
+        games.push({ id: game.id, organizer: game.organizer, title: game.title, location: game.location, date: game.date, time: game.time, player_level: game.player_level, passcode: game.passcode, participants: game.participants, status: game.status })
+    })
+    return games
+}
+
+export async function searchGames(title: string, location?: string, level: number = 0, date: Date = new Date(), time?: string): Promise<GameHeader[]> {
+    const db = supabase.from("test_games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("title", "ilike", "%" + title + "%")
+    db.filter("player_level", "eq", level).filter("date", "gte", formatDateToString(date))
+    if (location)
+        db.filter("location", "ilike", "%" + location + "%")
+    if (time)
+        db.filter("time", "gte", time)
+    const { data, error } = await db
     if (error)
         throw error
     const games: GameHeader[] = []
@@ -108,7 +125,7 @@ export async function joinAGame(game_id: string, uid: string) {
     if (error)
         throw error
     let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
-    await supabase.from("test_games").update({ participants: participants!.length + 1 })
+    await supabase.from("test_games").update({ participants: participants!.length })
     return data
 }
 
@@ -117,7 +134,7 @@ export async function cancelRSVP(game_id: string, uid: string) {
     if (error)
         throw error
     let { data: participants } = await supabase.from("test_participants").select("uid").eq('game_id', game_id)
-    await supabase.from("test_games").update({ participants: participants!.length - 1 })
+    await supabase.from("test_games").update({ participants: participants!.length })
     return data
 }
 

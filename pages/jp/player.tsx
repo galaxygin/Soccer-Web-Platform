@@ -1,17 +1,17 @@
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import { useCookies } from "react-cookie";
-import { getProfile, updateProfile } from "../api/request/UserRequest";
-import { landscapeFieldImgURI, Player } from "../Definitions";
-import PageBase from "./PageBase";
+import { getProfile, updateProfile } from "../../api/request/UserRequest";
+import { landscapeFieldImgURI, Player } from "../../Definitions";
+import PageBase from "../PageBase";
 import Image from 'next/image'
-import { darkerTextColor, defaultTheme, useStyles } from "../public/assets/styles/styles.web";
+import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
 import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { updateThumbnail } from "../components/UserDataManager";
+import { updateThumbnail } from "../../components/UserDataManager";
 
-export default function ProfileView() {
+export default function PlayerView() {
     const styles = useStyles()
     const router = useRouter()
     const [player, setPlayer] = useState<Player | null>(null)
@@ -60,6 +60,7 @@ export default function ProfileView() {
                 setPosition(player.position)
                 setLocalArea(player.local_area)
                 setThumbnailUrl(player.thumbnail_url)
+                setVisibility((player.is_private) ? "private" : "public")
             }
         }).catch(error => console.log(error.message)).finally(() => setLoading(false))
     }
@@ -95,12 +96,13 @@ export default function ProfileView() {
     function editButton() {
         if (isMyAccount()) {
             if (editingProfile)
-                return <div>
+                return <div style={{ display: 'flex', flexDirection: "row" }}>
                     <IconButton onClick={() => changingProfile(false)} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "red", color: "white" }}><Close /></IconButton>
+                    <div style={{ flexGrow: 1 }} />
                     <IconButton onClick={() => updateProfile(cookies.uid, name, bio, position, localArea, visibility).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
                 </div>
             else
-                return <IconButton onClick={() => changingProfile(true)} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "gray", color: "white" }}><Edit /></IconButton>
+                return <IconButton onClick={() => changingProfile(true)} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
         }
     }
 
@@ -114,12 +116,12 @@ export default function ProfileView() {
         }
         if (player) {
             return (
-                <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                <div style={{ display: "flex", flexDirection: "column", height: height - 115 }}>
                     <Dialog open={changeThumb} onClose={() => {
                         setNewThumb(null)
                         changingThumb(false)
                     }} fullWidth>
-                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>Change Thumbnail</DialogTitle>
+                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>サムネ更新</DialogTitle>
                         <DialogContent style={{ backgroundColor: '#454545', color: 'white' }}>
                             {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
                             <input type="file" onChange={pickImage} className="filetype" accept="image/*" id="group_image" /><br />
@@ -134,21 +136,21 @@ export default function ProfileView() {
                                     setErrorThumbMsg(error.message)
                                 }).finally(() => setThumbLoading(false))
                             }} color="primary" style={{ margin: 16, backgroundColor: 'red' }}>
-                                Update
+                                更新
                             </Button>}
                         </DialogActions>
                     </Dialog>
-                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={350} />
+                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={300} />
                     <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
                         {(editingProfile) ? <div style={{ display: "flex", padding: 16, flexDirection: "column" }}>
                             {editButton()}
-                            <TextField label="Visibility" variant="outlined" className={styles.formTextField} onChange={e => setVisibility(e.target.value)} defaultValue={visibility} select>
-                                <MenuItem key={"public"} value={"public"}>Public</MenuItem>
-                                <MenuItem key={"private"} value={"private"}>Private</MenuItem>
+                            <TextField label="プロフィール" variant="outlined" className={styles.formTextField} onChange={e => setVisibility(e.target.value)} defaultValue={visibility} select>
+                                <MenuItem key={"public"} value={"public"}>公開</MenuItem>
+                                <MenuItem key={"private"} value={"private"}>非公開</MenuItem>
                             </TextField>
                             <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} />
                             <TextField label="Position" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} select>
-                                <MenuItem key={""} value={""}>Anywhere</MenuItem>
+                                <MenuItem key={""} value={""}>どこでも</MenuItem>
                                 <MenuItem key={"GK"} value={"GK"}>GK</MenuItem>
                                 <MenuItem key={"CB"} value={"CB"}>CB</MenuItem>
                                 <MenuItem key={"SB"} value={"SB"}>SB</MenuItem>
@@ -177,8 +179,8 @@ export default function ProfileView() {
                                         {(player.is_private) ? <LockTwoTone style={{ width: 24, height: 24 }} /> : <div style={{ width: 24, height: 24 }} />}
                                     </div>
                                     <Typography style={{ color: darkerTextColor, marginTop: 16 }}>
-                                        Position: {player.position}<br />
-                                        Local area: {player.local_area}
+                                        ポジション: {player.position}<br />
+                                        地元: {player.local_area}
                                     </Typography>
                                 </div>
                                 <div style={{ flexGrow: 1 }} />
@@ -199,7 +201,7 @@ export default function ProfileView() {
             return (
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", paddingTop: 20 }}>
                     <Typography style={{ color: darkerTextColor }}>
-                        Couldn't get Player profile
+                        プレイヤーのプロファイルの取得に失敗しました。
                     </Typography>
                 </div >
             )
