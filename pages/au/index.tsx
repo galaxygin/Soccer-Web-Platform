@@ -1,13 +1,12 @@
 import { Fab, Typography, Snackbar, CircularProgress } from '@material-ui/core'
 import { AddTwoTone } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
-import React, { useState, useEffect } from 'react'
-import { useCookies } from 'react-cookie'
+import { User } from '@supabase/supabase-js'
+import React, { useState } from 'react'
 import { isMobile } from 'react-device-detect'
-import { getUser } from '../../api/request/AuthRequest'
 import { getGamesOfTheWeek, getMyGames } from '../../api/request/GameTestRequest'
 import { GameCollectionNoWrap } from '../../components/GameList'
-import OrganizeFormAU from '../../components/OrganizeForm'
+import OrganizeForm from '../../components/OrganizeForm'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
 import PageBase from '../PageBase'
@@ -35,19 +34,14 @@ export default function HomeView() {
   const [myGames, setMyGames] = useState<GameHeader[]>([])
   const [loadingGamesOfTheWeek, setLoadingGamesOfTheWeek] = useState(true)
   const [gamesOfTheWeek, setGamesOfTheWeek] = useState<GameHeader[]>([])
-  const [cookies, setCookie, removeCookie] = useCookies(['uid'])
+  const [user, setUser] = useState<User | null>()
 
   const [postDialog, openPostDialog] = useState(false)
   const [showSnackbar, openSnackbar] = useState(false)
 
-  useEffect(() => {
-    fetchMyGames()
-    fetchWeekGames()
-  }, [])
-
-  function fetchMyGames() {
+  function fetchMyGames(uid: string) {
     setLoadingMyGames(true)
-    getMyGames(cookies.uid).then(games => setMyGames(games)).catch(error => console.log(error.message)).finally(() => setLoadingMyGames(false))
+    getMyGames(uid).then(games => setMyGames(games)).catch(error => console.log(error.message)).finally(() => setLoadingMyGames(false))
   }
 
   function fetchWeekGames() {
@@ -74,28 +68,26 @@ export default function HomeView() {
   }
 
   function content() {
-    return (
-      <div style={{ paddingTop: 16 }}>
-        <OrganizeFormAU show={postDialog} uid={cookies.uid} posted={() => {
-          openPostDialog(false)
-          openSnackbar(true)
-          fetchMyGames()
-          fetchWeekGames()
-        }} onClose={() => openPostDialog(false)} />
-        {(getUser()) ? <>
+    if (user) {
+      return (
+        <div style={{ paddingTop: 16 }}>
+          <OrganizeForm show={postDialog} uid={user.id} posted={() => {
+            openPostDialog(false)
+            openSnackbar(true)
+            fetchMyGames(user.id)
+            fetchWeekGames()
+          }} onClose={() => openPostDialog(false)} />
           <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
             MY GAMES
           </Typography>
           {(loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderMyGames()}
-        </> : null}
-        <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          GAMES THIS WEEK
-        </Typography>
-        {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
-        <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-          <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
-        </Snackbar>
-        {(getUser()) ?
+          <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            GAMES THIS WEEK
+          </Typography>
+          {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
+          <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
+            <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
+          </Snackbar>
           <Fab aria-label={"Add"} style={{
             position: 'absolute',
             bottom: 80,
@@ -105,11 +97,30 @@ export default function HomeView() {
           }} onClick={() => {
             openPostDialog(true)
           }}>
-            {<AddTwoTone />}
-          </Fab> : null}
-      </div >
-    )
+            <AddTwoTone />
+          </Fab>
+        </div >
+      )
+    } else {
+      return (
+        <div style={{ paddingTop: 16 }}>
+          <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            GAMES THIS WEEK
+          </Typography>
+          {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
+          <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
+            <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
+          </Snackbar>
+        </div >
+      )
+    }
   }
 
-  return <PageBase content={content()} region={"au"} />
+  return <PageBase content={content()} region={"au"} onStateChanged={user => {
+    if (user) {
+      fetchMyGames(user.id)
+    }
+    setUser(user)
+    fetchWeekGames()
+  }} />
 }

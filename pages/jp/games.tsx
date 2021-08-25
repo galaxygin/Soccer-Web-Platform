@@ -1,38 +1,21 @@
 import DateFnsUtils from '@date-io/date-fns'
-import { Fab, Typography, Snackbar, CircularProgress, TextField, MenuItem, Button, IconButton } from '@material-ui/core'
+import { Fab, Typography, Snackbar, CircularProgress, TextField, MenuItem, IconButton } from '@material-ui/core'
 import { AddTwoTone, ChevronLeft, Close } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
 import { MuiPickersUtilsProvider, KeyboardDatePicker } from '@material-ui/pickers'
+import { User } from '@supabase/supabase-js'
 import React, { useState, useEffect } from 'react'
-import { useCookies } from 'react-cookie'
 import { isMobile } from 'react-device-detect'
-import { getUser } from '../../api/request/AuthRequest'
 import { getTodaysGames, getGamesOfTheWeek, searchGames } from '../../api/request/GameTestRequest'
 import { GameCollection, GameCollectionNoWrap } from '../../components/GameList'
-import OrganizeFormAU from '../../components/OrganizeForm'
+import OrganizeForm from '../../components/OrganizeForm'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
 import PageBase from '../PageBase'
 
-const games = [{
-    id: '1',
-    organizer: "Perra",
-    title: "Test",
-    description: "Setumei",
-    location: "Sydney",
-    date: new Date(),
-    time: new Date(),
-    player_level: 0,
-    passcode: null,
-    max_players: null,
-    min_players: null,
-    custom_rules: "No hands",
-    requirements: null,
-    participants: 1
-}]
-
 export default function GamesView() {
     const styles = useStyles()
+    const [user, setUser] = useState<User | null>()
 
     const [searchText, setSearchText] = useState("")
     const [location, setLocation] = useState<string>()
@@ -47,15 +30,9 @@ export default function GamesView() {
     const [todaysGames, setTodaysGames] = useState<GameHeader[]>([])
     const [loadingGamesOfTheWeek, setLoadingGamesOfTheWeek] = useState(true)
     const [gamesOfTheWeek, setGamesOfTheWeek] = useState<GameHeader[]>([])
-    const [cookies, setCookie, removeCookie] = useCookies(['uid'])
 
     const [postDialog, openPostDialog] = useState(false)
     const [showSnackbar, openSnackbar] = useState(false)
-
-    useEffect(() => {
-        fetchTodaysGames()
-        fetchWeekGames()
-    }, [])
 
     useEffect(() => {
         if (searchText)
@@ -171,12 +148,12 @@ export default function GamesView() {
     function content() {
         return (
             <div style={{ paddingTop: 16 }}>
-                <OrganizeFormAU show={postDialog} uid={cookies.uid} posted={() => {
+                {(user) ? <OrganizeForm show={postDialog} uid={user.id} posted={() => {
                     openPostDialog(false)
                     openSnackbar(true)
                     fetchTodaysGames()
                     fetchWeekGames()
-                }} onClose={() => openPostDialog(false)} />
+                }} onClose={() => openPostDialog(false)} /> : null}
                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
                     {(openingSearch) ? <IconButton style={{ marginLeft: 16 }} onClick={() => {
                         setOpeningSearch(false)
@@ -197,9 +174,9 @@ export default function GamesView() {
                     </Typography>
                     {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
                     <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-                        <Alert onClose={() => openSnackbar(false)} severity="success">The game has been organized successfully</Alert>
+                        <Alert onClose={() => openSnackbar(false)} severity="success">ゲームの企画に成功しました。</Alert>
                     </Snackbar>
-                    {(getUser()) ?
+                    {(user) ?
                         <Fab aria-label={"Add"} style={{
                             position: 'absolute',
                             bottom: 80,
@@ -209,12 +186,16 @@ export default function GamesView() {
                         }} onClick={() => {
                             openPostDialog(true)
                         }}>
-                            {<AddTwoTone />}
+                            <AddTwoTone />
                         </Fab> : null}
                 </>}
             </div >
         )
     }
 
-    return <PageBase content={content()} region={"jp"} />
+    return <PageBase content={content()} region={"jp"} onStateChanged={user => {
+        setUser(user)
+        fetchTodaysGames()
+        fetchWeekGames()
+    }} />
 }

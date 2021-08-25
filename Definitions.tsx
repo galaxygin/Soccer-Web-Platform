@@ -11,6 +11,7 @@ export type Player = {
     name: string,
     bio: string
     thumbnail_url: string | null,
+    header_url: string | undefined
     local_area: string | null,
     position: string,
     warning_score: number

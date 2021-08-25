@@ -1,35 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router'
 import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Snackbar } from '@material-ui/core';
-import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone, Close } from '@material-ui/icons';
+import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone } from '@material-ui/icons';
 import Header from './Header';
 import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
-import { appName } from '../Definitions';
+import { appName, landscapeFieldImgURI } from '../Definitions';
 import { isMobile } from 'react-device-detect'
-import { addUserToDB, getUser, signInWithEmail, signInWithGoogle, signOut, signUp } from '../api/request/AuthRequest';
-import { checkUserRegisteredAsPlayer, getProfile } from '../api/request/UserRequest';
+import { addUserToDB, getUser, signOut } from '../api/request/AuthRequest';
+import { checkUserRegisteredAsPlayer, getSimpleProfile } from '../api/request/UserRequest';
 import { Alert } from '@material-ui/lab';
 import { useCookies } from 'react-cookie';
-import { updateThumbnail } from '../components/UserDataManager';
+import { updateHeader, updateThumbnail } from '../components/UserDataManager';
+import { SigninDialog } from '../components/SigninDialog';
+import { User } from "@supabase/supabase-js"
+import Image from 'next/image';
 
 interface props {
     content: JSX.Element,
     detailView?: JSX.Element,
     wannaShowSigninDialog?: boolean
-    closingSigninDialog?: boolean
+    onStateChanged?: (user: User | null) => void
+    closingSigninDialog?: () => void
     header?: JSX.Element
     region?: string
 }
 
-export default function PageBase({ content, detailView, wannaShowSigninDialog = false, header = <Header />, region = "au" }: props) {
+export default function PageBase({ content, detailView, wannaShowSigninDialog = false, onStateChanged = () => { }, closingSigninDialog = () => { }, header = <Header />, region = "au" }: props) {
     const styles = useStyles()
     const drawerStyle = drawerStyles()
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
-    const [thumbnail_url, setThumbnailUrl] = useState<string | null>(null)
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
-    const [cookies, setCookie, removeCookie] = useCookies(['uid'])
+    const [setupCookie, setSetupCookie, removeSetupCookie] = useCookies(['user_setup_finished'])
     const [selectedRegion, setRegion] = useState(region)
 
     const [showSetupDialog, openSetupDialog] = useState(false)
@@ -38,17 +41,16 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [localArea, setLocalArea] = useState("")
     const [position, setPosition] = useState("")
     const [setupErrorMsg, setSetupErrorMsg] = useState("")
-    const [newThumb, setNewThumb] = useState<File | null>(null)
+    const [thumbnail_url, setThumbnailUrl] = useState<string | null>(null)
+    const [newThumb, setNewThumb] = useState<File>()
     const [thumbLoading, setThumbLoading] = useState(false)
     const [errorThumbMsg, setErrorThumbMsg] = useState(null)
+    const [header_url, setHeaderUrl] = useState<string | null>(null)
+    const [newHeader, setNewHeader] = useState<File>()
+    const [headerLoading, setHeaderLoading] = useState(false)
+    const [errorHeaderMsg, setErrorHeaderMsg] = useState(null)
 
     const [showSigninDialog, openSigninDialog] = useState(wannaShowSigninDialog)
-    const [authSuccessMsg, setAuthSuccessMsg] = useState("")
-    const [authErrorMsg, setAuthErrorMsg] = useState("")
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPW, setConfirmPW] = useState("")
-    const [myWindow, setWindow] = useState<Window | null>(null)
     const [signinMode, switchSigninMode] = useState("Sign in")
 
     const [showSnackbar, openSnackbar] = useState(false)
@@ -58,49 +60,41 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const isMenuOpen = Boolean(anchorEl);
 
     useEffect(() => {
-        if (getUser())
-            checkUserRegisteredAsPlayer(cookies.uid).then(result => {
-                if (result)
-                    getProfile(cookies.uid).then(player => {
-                        if (player)
-                            setThumbnailUrl(player.thumbnail_url)
-                    }).catch(error => console.log(error.message))
-                else {
-                    openSetupDialog(true)
-                }
-            }).catch(error => {
-                setSnackErrorMsg(error.message)
-                openSnackbar(true)
-            })
         setWidth(window.innerWidth)
         setHeight(window.innerHeight)
-        setWindow(window)
     }, [])
 
     useEffect(() => {
         console.log(getUser())
+        if (getUser()) {
+            if (setupCookie.user_setup_finished)
+                getSimpleProfile(getUser()!.id).then(player => {
+                    if (player)
+                        setThumbnailUrl(player.thumbnail_url)
+                }).catch(error => console.log(error.message)).finally(() => onStateChanged(getUser()))
+            else
+                checkUserRegisteredAsPlayer(getUser()!.id).then(result => {
+                    if (result) {
+                        setSetupCookie('user_setup_finished', true)
+                        getSimpleProfile(getUser()!.id).then(player => {
+                            if (player)
+                                setThumbnailUrl(player.thumbnail_url)
+                        }).catch(error => console.log(error.message)).finally(() => onStateChanged(getUser()))
+                    } else {
+                        openSetupDialog(true)
+                    }
+                }).catch(error => {
+                    setSnackErrorMsg(error.message)
+                    openSnackbar(true)
+                })
+        } else
+            onStateChanged(null)
     }, [getUser()])
-
-    useEffect(() => {
-        router.push("../" + selectedRegion)
-    }, [selectedRegion])
 
     const menuId = 'primary-search-account-menu';
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
-
-    function googleSignIn() {
-        signInWithGoogle().then(user => {
-            setCookie('uid', user.id)
-            getProfile(user.id).then(player => {
-                if (!player)
-                    openSetupDialog(true)
-                else
-                    window.location.reload()
-            })
-        }).catch(error => setAuthErrorMsg(error.message))
-    }
 
     function accountMenu() {
         if (getUser()) {
@@ -116,13 +110,13 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 >
                     <MenuItem onClick={() => {
                         handleMenuClose()
-                        router.push({ pathname: "profile", query: { uid: cookies.uid } })
+                        router.push({ pathname: "/" + selectedRegion + "/player", query: { uid: getUser()!.id } })
                     }}>Profile <AccountCircle style={{ marginLeft: 8 }} /></MenuItem>
                     <MenuItem onClick={() => {
                         handleMenuClose()
                         signOut().then(() => {
-                            removeCookie("uid")
-                            window.location.href = "/"
+                            removeSetupCookie("user_setup_finished")
+                            window.location.href = "/" + selectedRegion
                         })
                     }}>Sign out</MenuItem>
                 </Menu>
@@ -153,187 +147,167 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
         }
     }
 
-    function pickImage(event: React.ChangeEvent<HTMLInputElement>) {
+    function pickImage(event: React.ChangeEvent<HTMLInputElement>, mode: string) {
         if (event.target.files && event.target.files[0]) {
             // const fileReader: FileReader = new myWindow.FileReader()
             // fileReader.onload = async (e: Event) => { }
             // fileReader.readAsArrayBuffer(event.target.files[0]);
-            setNewThumb(event.target.files[0])
+            switch (mode) {
+                case "thumbnail":
+                    setNewThumb(event.target.files[0])
+                    break
+                case "header":
+                    setNewHeader(event.target.files[0])
+            }
         }
     }
 
     function playerSetupDialog() {
-        return (
-            <Dialog open={showSetupDialog} onClose={() => openSetupDialog(false)} fullScreen>
-                <DialogTitle>Setup Profile</DialogTitle>
-                <DialogContent>
-                    {(setupErrorMsg) ? <Alert severity="error">{setupErrorMsg}</Alert> : null}
-                    <Typography variant="h5" style={{ marginTop: 16 }}>
-                        Required
-                    </Typography>
-                    <Typography>
-                        We need these informations at least
-                    </Typography>
-                    <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
-                    <TextField label="Bio (Simply describe yourself)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
-                    <Typography variant="h5" style={{ marginTop: 16 }} paragraph>Optional</Typography>
-                    <Typography>Thumbnail</Typography>
-                    {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
-                    <input type="file" onChange={pickImage} className="filetype" accept="image/*" id="group_image" />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
-                        setThumbLoading(true)
-                        updateThumbnail(cookies.uid, newThumb!).then(url => {
-                            setThumbnailUrl(url)
-                        }).catch(error => {
-                            setErrorThumbMsg(error.message)
-                        }).finally(() => setThumbLoading(false))
-                    }} color="primary" style={{ margin: 16, backgroundColor: 'red' }}>
-                        Upload
-                    </Button>}<br />
-                    {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} alt={""} /> : null}
-                    <TextField label="Local area" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} fullWidth />
-                    <TextField label="Position" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} fullWidth select>
-                        <MenuItem key={""} value={""}>Anywhere</MenuItem>
-                        <MenuItem key={"GK"} value={"GK"}>GK</MenuItem>
-                        <MenuItem key={"CB"} value={"CB"}>CB</MenuItem>
-                        <MenuItem key={"SB"} value={"SB"}>SB</MenuItem>
-                        <MenuItem key={"MF"} value={"MF"}>MF</MenuItem>
-                        <MenuItem key={"CF"} value={"CF"}>CF</MenuItem>
-                        <MenuItem key={"LW"} value={"LW"}>LW</MenuItem>
-                        <MenuItem key={"RW"} value={"RW"}>RW</MenuItem>
-                    </TextField>
-                </DialogContent>
-                <DialogActions>
-                    <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
-                        if (!name) {
-                            setSetupErrorMsg("Name is required")
-                            return
-                        }
-                        if (!bio) {
-                            setSetupErrorMsg("Bio is required")
-                            return
-                        }
-                        addUserToDB(cookies.uid, name, bio, thumbnail_url, localArea, position).then(() => {
-                            openSetupDialog(false)
-                            window.location.reload()
-                        }).catch(error => setSetupErrorMsg(error.message))
-                    }}>Done</Button>
-                </DialogActions>
-            </Dialog>
-        )
-    }
-
-    function signinDialog() {
-        if (signinMode == "Sign in") {
-            return (
-                <Dialog open={showSigninDialog} onClose={() => {
-                    openSigninDialog(false)
-                }}>
-                    <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>
-                        Sign in
-                    </DialogTitle>
-                    <DialogContent style={{ backgroundColor: '#454545' }}>
-                        {(authErrorMsg) ? <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex', margin: 16 }}><Alert severity="error">Error: {authErrorMsg}</Alert></div> : null}
-                        <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
-                            <Button onClick={() => googleSignIn()}>
-                                <img src={'./assets/images/google_signin.png'} height={60} alt={"Google Signin"} />
-                            </Button>
-                        </div>
-                        <div style={{ marginTop: 32 }}>
-                            <TextField onChange={e => setEmail(e.target.value)} label="Email" required variant="filled" style={{ backgroundColor: 'white' }} fullWidth />
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <TextField onChange={e => setPassword(e.target.value)} type={'password'} label="Password" required variant="filled" style={{ backgroundColor: 'white' }} fullWidth />
-                        </div>
-                        <Typography align={"center"} style={{ margin: 16 }} paragraph>
-                            <Button variant="contained" onClick={() => signInWithEmail(email, password).then(user => {
-                                setCookie('uid', user.id)
-                                myWindow!.location.reload()
-                            }).catch(error => setAuthErrorMsg(error.message))} style={{ margin: 16, backgroundColor: 'white' }}>
-                                Sign in
-                            </Button><br /><br />
-                            <a href="forgot-password" style={{ color: 'aqua' }}>Forgot password</a>
-                        </Typography>
-                        <Typography align={"center"} style={{ color: 'white', marginTop: 16 }} >
-                            You can create an account if you don't have one<br />
-                            <Button variant="contained" onClick={() => switchSigninMode("Sign up")} color="primary" style={{ margin: 16 }}>
-                                Sign up
-                            </Button>
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions style={{ backgroundColor: "#454545" }}>
-                        <IconButton onClick={() => {
-                            openSigninDialog(false)
-                        }}>
-                            <Close style={{ color: "red" }} />
-                        </IconButton>
-                        <div style={{ flexGrow: 1 }} />
-                    </DialogActions>
-                </Dialog >
-            )
-        } else {
-            return (
-                <Dialog open={showSigninDialog} onClose={() => {
-                    openSigninDialog(false)
-                }}>
-                    <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>Sign up</DialogTitle>
-                    <DialogContent style={{ backgroundColor: '#454545' }}>
-                        {(authSuccessMsg) ? <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex', margin: 16 }}><Alert severity="success">{authSuccessMsg}</Alert></div> : null}
-                        {(authErrorMsg) ? <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex', margin: 16 }}><Alert severity="error">Error: {authErrorMsg}</Alert></div> : null}
-                        <div style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}>
-                            <Button onClick={() => googleSignIn()}>
-                                <img src={'./assets/images/google_signin.png'} height={60} alt={"Google Signin"} />
-                            </Button>
-                        </div>
-                        <div style={{ marginTop: 32 }}>
-                            <TextField onChange={e => setEmail(e.target.value)} label="Email" required variant="filled" style={{ backgroundColor: 'white' }} fullWidth />
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <TextField onChange={e => setPassword(e.target.value)} type={'password'} label="Password" required variant="filled" style={{ backgroundColor: 'white' }} fullWidth />
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <TextField onChange={e => setConfirmPW(e.target.value)} type={'password'} label="Confirm" required variant="filled" style={{ backgroundColor: 'white' }} fullWidth />
-                        </div>
-                        <Typography align={"center"} style={{ margin: 16 }} paragraph>
-                            <Button variant="contained" onClick={() => {
-                                if (email == "") {
-                                    setAuthErrorMsg("Email is not filled")
+        switch (selectedRegion) {
+            case "jp":
+                return (
+                    <Dialog open={showSetupDialog} onClose={() => openSetupDialog(false)} fullScreen>
+                        <DialogTitle>プロフィール設定</DialogTitle>
+                        <DialogContent>
+                            {(setupErrorMsg) ? <Alert severity="error">{setupErrorMsg}</Alert> : null}
+                            <Typography variant="h5" >
+                                必須項目
+                            </Typography>
+                            <Typography>
+                                これらは設定に最低限必要な情報となります。
+                            </Typography>
+                            <TextField label="表示名" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
+                            <TextField label="説明 (あなた自身について簡単に説明してください)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
+                            <Typography variant="h5" style={{ marginTop: 32 }} paragraph>オプション</Typography>
+                            <Typography variant="h6">サムネイル</Typography>
+                            {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
+                            {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} alt={""} /> : <AccountCircle style={{ width: 100, height: 100 }} />}
+                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
+                                setThumbLoading(true)
+                                updateThumbnail(getUser()!.id, newThumb!).then(url => {
+                                    setThumbnailUrl(url)
+                                }).catch(error => {
+                                    setErrorThumbMsg(error.message)
+                                }).finally(() => setThumbLoading(false))
+                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
+                                アップロード
+                            </Button>}<br />
+                            <Typography variant="h6">ヘッダー</Typography>
+                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
+                            <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} />
+                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />{(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
+                                setHeaderLoading(true)
+                                updateHeader(getUser()!.id, newHeader!).then(url => {
+                                    setHeaderUrl(url)
+                                }).catch(error => {
+                                    setErrorHeaderMsg(error.message)
+                                }).finally(() => setHeaderLoading(false))
+                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
+                                アップロード
+                            </Button>}
+                            <TextField label="地元" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} fullWidth />
+                            <TextField label="ポジション" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} fullWidth select>
+                                <MenuItem key={""} value={""}>Anywhere</MenuItem>
+                                <MenuItem key={"GK"} value={"GK"}>GK</MenuItem>
+                                <MenuItem key={"CB"} value={"CB"}>CB</MenuItem>
+                                <MenuItem key={"SB"} value={"SB"}>SB</MenuItem>
+                                <MenuItem key={"MF"} value={"MF"}>MF</MenuItem>
+                                <MenuItem key={"CF"} value={"CF"}>CF</MenuItem>
+                                <MenuItem key={"LW"} value={"LW"}>LW</MenuItem>
+                                <MenuItem key={"RW"} value={"RW"}>RW</MenuItem>
+                            </TextField>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
+                                if (!name) {
+                                    setSetupErrorMsg("表示名は必須です")
                                     return
                                 }
-                                if (password != confirmPW) {
-                                    setAuthErrorMsg("Password doesn't match")
+                                if (!bio) {
+                                    setSetupErrorMsg("説明は必須です")
                                     return
                                 }
-                                if (password.length < 8) {
-                                    setAuthErrorMsg("Password length must be more than 8 characters")
+                                addUserToDB(getUser()!.id, name, bio, thumbnail_url, localArea, position).then(() => {
+                                    openSetupDialog(false)
+                                    setSetupCookie('user_setup_finished', true)
+                                    onStateChanged(getUser())
+                                }).catch(error => setSetupErrorMsg(error.message))
+                            }}>完了</Button>
+                        </DialogActions>
+                    </Dialog>
+                )
+            default:
+                return (
+                    <Dialog open={showSetupDialog} onClose={() => openSetupDialog(false)} fullScreen>
+                        <DialogTitle>Setup Profile</DialogTitle>
+                        <DialogContent>
+                            {(setupErrorMsg) ? <Alert severity="error">{setupErrorMsg}</Alert> : null}
+                            <Typography variant="h5" >
+                                Required
+                            </Typography>
+                            <Typography>
+                                We need these informations at least
+                            </Typography>
+                            <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
+                            <TextField label="Bio (Simply describe yourself)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
+                            <Typography variant="h5" style={{ marginTop: 32 }} paragraph>Optional</Typography>
+                            <Typography variant="h6">Thumbnail</Typography>
+                            {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
+                            {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} alt={""} /> : <AccountCircle style={{ width: 100, height: 100 }} />}
+                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
+                                setThumbLoading(true)
+                                updateThumbnail(getUser()!.id, newThumb!).then(url => {
+                                    setThumbnailUrl(url)
+                                }).catch(error => {
+                                    setErrorThumbMsg(error.message)
+                                }).finally(() => setThumbLoading(false))
+                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
+                                Upload
+                            </Button>}<br />
+                            <Typography variant="h6">Header</Typography>
+                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
+                            <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} />
+                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />{(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
+                                setHeaderLoading(true)
+                                updateHeader(getUser()!.id, newHeader!).then(url => {
+                                    setHeaderUrl(url)
+                                }).catch(error => {
+                                    setErrorHeaderMsg(error.message)
+                                }).finally(() => setHeaderLoading(false))
+                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
+                                Upload
+                            </Button>}
+                            <TextField label="Local area" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} fullWidth />
+                            <TextField label="Position" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} fullWidth select>
+                                <MenuItem key={""} value={""}>Anywhere</MenuItem>
+                                <MenuItem key={"GK"} value={"GK"}>GK</MenuItem>
+                                <MenuItem key={"CB"} value={"CB"}>CB</MenuItem>
+                                <MenuItem key={"SB"} value={"SB"}>SB</MenuItem>
+                                <MenuItem key={"MF"} value={"MF"}>MF</MenuItem>
+                                <MenuItem key={"CF"} value={"CF"}>CF</MenuItem>
+                                <MenuItem key={"LW"} value={"LW"}>LW</MenuItem>
+                                <MenuItem key={"RW"} value={"RW"}>RW</MenuItem>
+                            </TextField>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
+                                if (!name) {
+                                    setSetupErrorMsg("Name is required")
                                     return
                                 }
-                                signUp(email, password).then(user => {
-                                    if (user.id) {
-                                        setCookie('uid', user.id)
-                                        setAuthSuccessMsg("Sign up success. Please confirm your enail first")
-                                    }
-                                }).catch(error => setAuthErrorMsg(error.message))
-                            }} style={{ margin: 16, backgroundColor: 'white' }}>
-                                Sign up
-                            </Button>
-                        </Typography>
-                        <Typography align={"center"} style={{ color: 'white', marginTop: 16 }} >
-                            You can sign in if you already have an account<br />
-                            <Button variant="contained" onClick={() => switchSigninMode("Sign in")} color="primary" style={{ margin: 16 }}>
-                                Sign in
-                            </Button>
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions style={{ backgroundColor: "#454545" }}>
-                        <IconButton onClick={() => {
-                            openSigninDialog(false)
-                        }}>
-                            <Close style={{ color: "red" }} />
-                        </IconButton>
-                        <div style={{ flexGrow: 1 }} />
-                    </DialogActions>
-                </Dialog>
-            )
+                                if (!bio) {
+                                    setSetupErrorMsg("Bio is required")
+                                    return
+                                }
+                                addUserToDB(getUser()!.id, name, bio, thumbnail_url, localArea, position).then(() => {
+                                    openSetupDialog(false)
+                                    setSetupCookie('user_setup_finished', true)
+                                    onStateChanged(getUser())
+                                }).catch(error => setSetupErrorMsg(error.message))
+                            }}>Done</Button>
+                        </DialogActions>
+                    </Dialog>
+                )
         }
     }
 
@@ -362,7 +336,13 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 <div style={{ display: "flex", flexDirection: "column", width: "100%", height: height, overflow: "hidden" }}>
                     <main style={{ backgroundColor: defaultTheme, width: "100%", overflow: "scroll" }}>
                         <div className={styles.drawerHeader} />
-                        {signinDialog()}
+                        <SigninDialog show={showSigninDialog || wannaShowSigninDialog} region={region} mode={signinMode} signedIn={user => {
+                            openSigninDialog(false)
+                            closingSigninDialog()
+                        }} onClose={() => {
+                            openSigninDialog(false)
+                            closingSigninDialog()
+                        }} />
                         <div style={{ height: 5 }} />
                         {content}
                     </main>
@@ -370,7 +350,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         value={selectedIndex}
                         onChange={(e, value) => {
                             setSelectedIndex(value)
-                            router.push(value)
+                            router.push("/" + selectedRegion + "/" + value)
                         }}
                         showLabels
                         style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}
@@ -412,7 +392,13 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 </AppBar>
                 <main style={{ width: width, display: 'flex', flexDirection: 'column' }}>
                     <div className={styles.drawerHeader} />
-                    {signinDialog()}
+                    <SigninDialog show={showSigninDialog || wannaShowSigninDialog} region={region} mode={signinMode} signedIn={user => {
+                        openSigninDialog(false)
+                        closingSigninDialog()
+                    }} onClose={() => {
+                        openSigninDialog(false)
+                        closingSigninDialog()
+                    }} />
                     <div style={{ display: "flex" }}>
                         <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
                             <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion)}>
@@ -430,6 +416,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
                                 ©️ AIZero Inc. 2021     {(selectedRegion == "au") ? "Region" : "国"}<TextField onChange={e => {
                                     setRegion(e.target.value)
+                                    router.push("../" + selectedRegion)
                                 }} value={selectedRegion} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
                                     <MenuItem key="australia" value="au">Australia</MenuItem>
                                     <MenuItem key="japan" value="jp">日本</MenuItem>

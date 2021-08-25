@@ -65,7 +65,7 @@ export default function ParticipantsView({ game_id }: props) {
         if (participants.length > 0) {
             return (
                 <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", backgroundColor: "white", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}>
-                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={350} />
+                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={300} />
                     <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                         <Typography variant="h5" style={{ color: darkerTextColor, marginLeft: 16 }}>Participants</Typography>
                         <IconButton onClick={() => updateList()}>

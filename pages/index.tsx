@@ -27,6 +27,7 @@ export default function HomeView() {
   }, [])
 
   return <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+    Checking Region<br />
     <CircularProgress />
   </div>
 }

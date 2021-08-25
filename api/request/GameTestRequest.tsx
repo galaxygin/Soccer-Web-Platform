@@ -1,4 +1,4 @@
-import { formatDateToString, formatTimeToString, getMondayOfTheWeek, getNextMonday } from "../../components/DateManager";
+import { formatDateToString, getMondayOfTheWeek, getNextMonday } from "../../components/DateManager";
 import { Game, GameHeader, GameMetaData, Message, SimpleProfile } from "../../Definitions";
 import { supabase } from "../../SupabaseManager";
 

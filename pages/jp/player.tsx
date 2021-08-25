@@ -1,6 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
-import { useCookies } from "react-cookie";
 import { getProfile, updateProfile } from "../../api/request/UserRequest";
 import { landscapeFieldImgURI, Player } from "../../Definitions";
 import PageBase from "../PageBase";
@@ -9,13 +8,14 @@ import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/st
 import { useRouter } from "next/router";
 import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { updateThumbnail } from "../../components/UserDataManager";
+import { updateHeader, updateThumbnail } from "../../components/UserDataManager";
+import { User } from "@supabase/supabase-js";
 
 export default function PlayerView() {
     const styles = useStyles()
     const router = useRouter()
     const [player, setPlayer] = useState<Player | null>(null)
-    const [cookies, setCookie, removeCookie] = useCookies(['uid'])
+    const [user, setUser] = useState<User | null>()
     const [loading, setLoading] = useState(true)
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
@@ -27,6 +27,7 @@ export default function PlayerView() {
     const [position, setPosition] = useState("Anywhere")
     const [localArea, setLocalArea] = useState<string | null>("")
     const [thumbnail_url, setThumbnailUrl] = useState<string | null>('')
+    const [header_url, setHeaderUrl] = useState<string>()
     const [visibility, setVisibility] = useState("public")
     const [profileErrorMsg, setProfileErrorMsg] = useState(null)
 
@@ -35,8 +36,16 @@ export default function PlayerView() {
     const [thumbLoading, setThumbLoading] = useState(false)
     const [errorThumbMsg, setErrorThumbMsg] = useState(null)
 
+    const [changeHeader, changingHeader] = useState(false)
+    const [newHeader, setNewHeader] = useState<File>()
+    const [headerLoading, setHeaderLoading] = useState(false)
+    const [errorHeaderMsg, setErrorHeaderMsg] = useState(null)
+
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
+
+    const [headerAnchorEl, setHeaderAnchorEl] = useState<HTMLElement | null>(null);
+    const isHeaderMenuOpen = Boolean(headerAnchorEl);
 
     useEffect(() => {
         setWidth(window.innerWidth)
@@ -65,32 +74,20 @@ export default function PlayerView() {
         }).catch(error => console.log(error.message)).finally(() => setLoading(false))
     }
 
-    const menuId = 'primary-search-account-menu';
-    const renderMenu = (
-        <Menu
-            anchorEl={anchorEl}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            id={menuId}
-            keepMounted
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={isMenuOpen}
-            onClose={e => setAnchorEl(null)}
-        >
-            <MenuItem onClick={() => {
-                setAnchorEl(null)
-                changingThumb(true)
-            }}>Update thumbnail</MenuItem>
-        </Menu>
-    );
-
-    function pickImage(event: React.ChangeEvent<HTMLInputElement>) {
+    function pickImage(event: React.ChangeEvent<HTMLInputElement>, mode: string) {
         if (event.target.files && event.target.files[0]) {
-            setNewThumb(event.target.files[0])
+            switch (mode) {
+                case "thumbnail":
+                    setNewThumb(event.target.files[0])
+                    break
+                case "header":
+                    setNewHeader(event.target.files[0])
+            }
         }
     }
 
     function isMyAccount(): boolean {
-        return router.query.uid == cookies.uid
+        return router.query.uid == user?.id
     }
 
     function editButton() {
@@ -99,7 +96,7 @@ export default function PlayerView() {
                 return <div style={{ display: 'flex', flexDirection: "row" }}>
                     <IconButton onClick={() => changingProfile(false)} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "red", color: "white" }}><Close /></IconButton>
                     <div style={{ flexGrow: 1 }} />
-                    <IconButton onClick={() => updateProfile(cookies.uid, name, bio, position, localArea, visibility).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
+                    <IconButton onClick={() => updateProfile(user!.id, name, bio, position, localArea, visibility).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
                 </div>
             else
                 return <IconButton onClick={() => changingProfile(true)} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
@@ -117,30 +114,83 @@ export default function PlayerView() {
         if (player) {
             return (
                 <div style={{ display: "flex", flexDirection: "column", height: height - 115 }}>
+                    <Menu
+                        anchorEl={anchorEl}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        id={"thumbnail_menu"}
+                        keepMounted
+                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        open={isMenuOpen}
+                        onClose={e => setAnchorEl(null)}
+                    >
+                        <MenuItem onClick={() => {
+                            setAnchorEl(null)
+                            changingThumb(true)
+                        }}>サムネ画像を変更</MenuItem>
+                    </Menu>
+                    <Menu
+                        anchorEl={headerAnchorEl}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        id={"header_menu"}
+                        keepMounted
+                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        open={isHeaderMenuOpen}
+                        onClose={e => setHeaderAnchorEl(null)}
+                    >
+                        <MenuItem onClick={() => {
+                            setHeaderAnchorEl(null)
+                            changingHeader(true)
+                        }}>ヘッダー画像を変更</MenuItem>
+                    </Menu>
                     <Dialog open={changeThumb} onClose={() => {
                         setNewThumb(null)
                         changingThumb(false)
                     }} fullWidth>
-                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>サムネ更新</DialogTitle>
+                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>サムネ変更</DialogTitle>
                         <DialogContent style={{ backgroundColor: '#454545', color: 'white' }}>
                             {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
-                            <input type="file" onChange={pickImage} className="filetype" accept="image/*" id="group_image" /><br />
+                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />
                         </DialogContent>
                         <DialogActions style={{ backgroundColor: '#454545', color: 'white' }}>
-                            {(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="contained" onClick={() => {
+                            {(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
                                 setThumbLoading(true)
-                                updateThumbnail(cookies.uid, newThumb!).then(url => {
+                                updateThumbnail(user!.id, newThumb!).then(url => {
                                     setThumbnailUrl(url)
                                     changingThumb(false)
                                 }).catch(error => {
                                     setErrorThumbMsg(error.message)
                                 }).finally(() => setThumbLoading(false))
                             }} color="primary" style={{ margin: 16, backgroundColor: 'red' }}>
-                                更新
+                                変更
                             </Button>}
                         </DialogActions>
                     </Dialog>
-                    <Image src={landscapeFieldImgURI} width={width * 0.5} height={300} />
+                    <Dialog open={changeHeader} onClose={() => {
+                        setNewHeader(undefined)
+                        changingHeader(false)
+                    }} fullWidth>
+                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>ヘッダー変更</DialogTitle>
+                        <DialogContent style={{ backgroundColor: '#454545', color: 'white' }}>
+                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
+                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />
+                        </DialogContent>
+                        <DialogActions style={{ backgroundColor: '#454545', color: 'white' }}>
+                            {(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
+                                setHeaderLoading(true)
+                                updateHeader(user!.id, newHeader!).then(url => {
+                                    setHeaderUrl(url)
+                                    changingHeader(false)
+                                }).catch(error => {
+                                    setErrorHeaderMsg(error.message)
+                                }).finally(() => setHeaderLoading(false))
+                            }} color="primary" style={{ margin: 16, backgroundColor: 'red', color: "white" }}>
+                                変更
+                            </Button>}
+                        </DialogActions>
+                    </Dialog>
+                    <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} onClick={e => {
+                        if (isMyAccount()) { setHeaderAnchorEl(e.currentTarget) }
+                    }} />
                     <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
                         {(editingProfile) ? <div style={{ display: "flex", padding: 16, flexDirection: "column" }}>
                             {editButton()}
@@ -194,7 +244,6 @@ export default function PlayerView() {
                     <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
                         <Alert onClose={() => openSnackbar(false)} severity="error">{profileErrorMsg}</Alert>
                     </Snackbar>
-                    {renderMenu}
                 </div >
             )
         } else {
@@ -208,5 +257,7 @@ export default function PlayerView() {
         }
     }
 
-    return <PageBase content={content()} />
+    return <PageBase content={content()} region={"jp"} onStateChanged={user => {
+        setUser(user)
+    }} />
 }
