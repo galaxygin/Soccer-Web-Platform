@@ -7,25 +7,34 @@ export const landscapeFieldImgURI = "/assets/images/SoccerFieldLandscape.jpg"
 */
 
 export type Player = {
-    uid: string,
-    name: string,
+    uid: string
+    name: string
     bio: string
-    thumbnail_url: string | null,
-    header_url: string | undefined
-    local_area: string | null,
-    position: string,
+    thumbnail_url?: string
+    header_url?: string
+    local_area?: string
+    position: string
     warning_score: number
-    blocked_players: Player[] | null,
-    last_online: Date | any
+    blocked_players?: Player[]
+    last_online?: Date
     is_private: boolean
+    region: string
 }
 
 export type SimpleProfile = {
     uid: string
     name: string
-    thumbnail_url: string
+    thumbnail_url?: string
     position?: string
-    is_private?: boolean
+    is_private: boolean
+}
+
+export type PlayerMetaData = {
+    uid: string
+    name: string
+    bio?: string
+    thumbnail_url?: string
+    is_private: boolean
 }
 
 export type Game = {
@@ -44,6 +53,7 @@ export type Game = {
     custom_rules: string | null
     requirements: string | null
     status: string | null
+    region: string
 }
 
 export type GameMetaData = {
@@ -120,6 +130,17 @@ export enum PlanDescription {
     player = "Can join a game and organise (public?) game",
     manager = "Can create own team"
 }
+
+export type Region = {
+    key: string
+    value: string
+    label: string
+}
+
+export const regions: Region[] = [
+    { key: "australia", value: "au", label: "Australia" },
+    { key: "japan", value: "jp", label: "日本" }
+]
 
 export const getPlayerLevel = (level: number) => {
     switch (level) {

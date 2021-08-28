@@ -1,17 +1,22 @@
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
+import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
-import { getProfile, updateProfile } from "../../api/request/UserRequest";
-import { landscapeFieldImgURI, Player } from "../../Definitions";
+import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
+import { landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
 import PageBase from "../PageBase";
 import Image from 'next/image'
 import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
 import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { updateHeader, updateThumbnail } from "../../components/UserDataManager";
 import { User } from "@supabase/supabase-js";
+import Header from "../Header";
+import { HeaderUploader, ThumbnailUploader } from "../../components/ImageUploader";
 
-export default function PlayerView() {
+interface props {
+    metadata: PlayerMetaData | null
+}
+
+export default function PlayerView({ metadata }: props) {
     const styles = useStyles()
     const router = useRouter()
     const [player, setPlayer] = useState<Player | null>(null)
@@ -25,21 +30,14 @@ export default function PlayerView() {
     const [name, setName] = useState("")
     const [bio, setBio] = useState("")
     const [position, setPosition] = useState("Anywhere")
-    const [localArea, setLocalArea] = useState<string | null>("")
-    const [thumbnail_url, setThumbnailUrl] = useState<string | null>('')
+    const [localArea, setLocalArea] = useState<string | undefined>("")
+    const [thumbnail_url, setThumbnailUrl] = useState<string>()
     const [header_url, setHeaderUrl] = useState<string>()
     const [visibility, setVisibility] = useState("public")
     const [profileErrorMsg, setProfileErrorMsg] = useState(null)
 
     const [changeThumb, changingThumb] = useState(false)
-    const [newThumb, setNewThumb] = useState<File>()
-    const [thumbLoading, setThumbLoading] = useState(false)
-    const [errorThumbMsg, setErrorThumbMsg] = useState(null)
-
     const [changeHeader, changingHeader] = useState(false)
-    const [newHeader, setNewHeader] = useState<File>()
-    const [headerLoading, setHeaderLoading] = useState(false)
-    const [errorHeaderMsg, setErrorHeaderMsg] = useState(null)
 
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
@@ -75,18 +73,6 @@ export default function PlayerView() {
         }).catch(error => console.log(error.message)).finally(() => setLoading(false))
     }
 
-    function pickImage(event: React.ChangeEvent<HTMLInputElement>, mode: string) {
-        if (event.target.files && event.target.files[0]) {
-            switch (mode) {
-                case "thumbnail":
-                    setNewThumb(event.target.files[0])
-                    break
-                case "header":
-                    setNewHeader(event.target.files[0])
-            }
-        }
-    }
-
     function isMyAccount(): boolean {
         return router.query.uid == user?.id
     }
@@ -97,7 +83,7 @@ export default function PlayerView() {
                 return <div style={{ display: 'flex', flexDirection: "row" }}>
                     <IconButton onClick={() => changingProfile(false)} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "red", color: "white" }}><Close /></IconButton>
                     <div style={{ flexGrow: 1 }} />
-                    <IconButton onClick={() => updateProfile(user!.id, name, bio, position, localArea, visibility).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
+                    <IconButton onClick={() => updateProfile(user!.id, name, bio, position, visibility, localArea).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
                 </div>
             else
                 return <IconButton onClick={() => changingProfile(true)} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
@@ -144,50 +130,20 @@ export default function PlayerView() {
                             changingHeader(true)
                         }}>Update header</MenuItem>
                     </Menu>
-                    <Dialog open={changeThumb} onClose={() => {
-                        setNewThumb(undefined)
-                        changingThumb(false)
-                    }} fullWidth>
-                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>Change Thumbnail</DialogTitle>
-                        <DialogContent style={{ backgroundColor: '#454545', color: 'white' }}>
-                            {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
-                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />
-                        </DialogContent>
-                        <DialogActions style={{ backgroundColor: '#454545', color: 'white' }}>
-                            {(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
-                                setThumbLoading(true)
-                                updateThumbnail(user!.id, newThumb!).then(url => {
-                                    setThumbnailUrl(url)
-                                    changingThumb(false)
-                                }).catch(error => {
-                                    setErrorThumbMsg(error.message)
-                                }).finally(() => setThumbLoading(false))
-                            }} color="primary" style={{ margin: 16, backgroundColor: 'red', color: "white" }}>
-                                Update
-                            </Button>}
+                    <Dialog open={changeThumb} onClose={() => changingThumb(false)} fullWidth>
+                        <ThumbnailUploader uid={user!.id} region={"au"} onSuccess={url => setThumbnailUrl(url)} />
+                        <DialogActions style={{ backgroundColor: 'white', marginTop: 32 }}>
+                            <Button variant="outlined" onClick={() => changingThumb(false)}>Close</Button>
+                            <div style={{ flexGrow: 1 }} />
+                            <Button variant="outlined" onClick={() => changingThumb(false)}>Done</Button>
                         </DialogActions>
                     </Dialog>
-                    <Dialog open={changeHeader} onClose={() => {
-                        setNewHeader(undefined)
-                        changingHeader(false)
-                    }} fullWidth>
-                        <DialogTitle style={{ backgroundColor: '#454545', color: 'white' }}>Change Header</DialogTitle>
-                        <DialogContent style={{ backgroundColor: '#454545', color: 'white' }}>
-                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
-                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />
-                        </DialogContent>
-                        <DialogActions style={{ backgroundColor: '#454545', color: 'white' }}>
-                            {(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
-                                setHeaderLoading(true)
-                                updateHeader(user!.id, newHeader!).then(url => {
-                                    setHeaderUrl(url)
-                                    changingHeader(false)
-                                }).catch(error => {
-                                    setErrorHeaderMsg(error.message)
-                                }).finally(() => setHeaderLoading(false))
-                            }} color="primary" style={{ margin: 16, backgroundColor: 'red', color: "white" }}>
-                                Update
-                            </Button>}
+                    <Dialog open={changeHeader} onClose={() => changingHeader(false)} fullWidth>
+                        <HeaderUploader uid={user!.id} region={"au"} onSuccess={url => setHeaderUrl(url)} imagePreviewWidth={width * 0.5} />
+                        <DialogActions style={{ backgroundColor: 'white', marginTop: 32 }}>
+                            <Button variant="outlined" onClick={() => changingHeader(false)}>Close</Button>
+                            <div style={{ flexGrow: 1 }} />
+                            <Button variant="outlined" onClick={() => changingHeader(false)}>Done</Button>
                         </DialogActions>
                     </Dialog>
                     <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} onClick={e => {
@@ -259,7 +215,20 @@ export default function PlayerView() {
         }
     }
 
-    return <PageBase content={content()} region={"au"} onStateChanged={user => {
+    return <PageBase content={content()} header={<Header title={(metadata) ? metadata.name : "Couldn't get player name"} description={(metadata?.is_private) ? "Private or couldn't get player bio" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={""} />} region={"au"} onStateChanged={user => {
         setUser(user)
     }} />
+}
+
+export async function getServerSideProps(context: any) {
+    const { uid } = context.query
+    if (uid) {
+        var data = null
+        await getPlayerMetaData(uid).then(metadata => {
+            data = metadata
+        }).catch(error => console.log(error.message))
+        return { props: { metadata: data } }
+    } else {
+        return { props: { metadata: null } }
+    }
 }

@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router'
-import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Snackbar } from '@material-ui/core';
+import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, CircularProgress } from '@material-ui/core';
 import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone } from '@material-ui/icons';
 import Header from './Header';
 import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
-import { appName, landscapeFieldImgURI } from '../Definitions';
+import { appName, regions } from '../Definitions';
 import { isMobile } from 'react-device-detect'
 import { addUserToDB, getUser, signOut } from '../api/request/AuthRequest';
 import { checkUserRegisteredAsPlayer, getSimpleProfile } from '../api/request/UserRequest';
 import { Alert } from '@material-ui/lab';
 import { useCookies } from 'react-cookie';
-import { updateHeader, updateThumbnail } from '../components/UserDataManager';
 import { SigninDialog } from '../components/SigninDialog';
 import { User } from "@supabase/supabase-js"
-import Image from 'next/image';
+import { ThumbnailUploader, HeaderUploader } from '../components/ImageUploader';
 
 interface props {
     content: JSX.Element,
@@ -33,7 +32,6 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
     const [setupCookie, setSetupCookie, removeSetupCookie] = useCookies(['user_setup_finished'])
-    const [selectedRegion, setRegion] = useState(region)
 
     const [showSetupDialog, openSetupDialog] = useState(false)
     const [name, setName] = useState("")
@@ -41,18 +39,12 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [localArea, setLocalArea] = useState("")
     const [position, setPosition] = useState("")
     const [setupErrorMsg, setSetupErrorMsg] = useState("")
-    const [thumbnail_url, setThumbnailUrl] = useState<string | null>(null)
-    const [newThumb, setNewThumb] = useState<File>()
-    const [thumbLoading, setThumbLoading] = useState(false)
-    const [errorThumbMsg, setErrorThumbMsg] = useState(null)
-    const [header_url, setHeaderUrl] = useState<string | null>(null)
-    const [newHeader, setNewHeader] = useState<File>()
-    const [headerLoading, setHeaderLoading] = useState(false)
-    const [errorHeaderMsg, setErrorHeaderMsg] = useState(null)
+    const [thumbnail_url, setThumbnailUrl] = useState<string | undefined>("")
 
     const [showSigninDialog, openSigninDialog] = useState(wannaShowSigninDialog)
     const [signinMode, switchSigninMode] = useState("Sign in")
 
+    const [changingRegion, changeRegion] = useState(false)
     const [showSnackbar, openSnackbar] = useState(false)
     const [snackErrorMsg, setSnackErrorMsg] = useState(null)
 
@@ -110,13 +102,13 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 >
                     <MenuItem onClick={() => {
                         handleMenuClose()
-                        router.push({ pathname: "/" + selectedRegion + "/player", query: { uid: getUser()!.id } })
+                        router.push({ pathname: "/" + region + "/player", query: { uid: getUser()!.id } })
                     }}>Profile <AccountCircle style={{ marginLeft: 8 }} /></MenuItem>
                     <MenuItem onClick={() => {
                         handleMenuClose()
                         signOut().then(() => {
                             removeSetupCookie("user_setup_finished")
-                            window.location.href = "/" + selectedRegion
+                            window.location.href = "/" + region
                         })
                     }}>Sign out</MenuItem>
                 </Menu>
@@ -147,23 +139,10 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
         }
     }
 
-    function pickImage(event: React.ChangeEvent<HTMLInputElement>, mode: string) {
-        if (event.target.files && event.target.files[0]) {
-            // const fileReader: FileReader = new myWindow.FileReader()
-            // fileReader.onload = async (e: Event) => { }
-            // fileReader.readAsArrayBuffer(event.target.files[0]);
-            switch (mode) {
-                case "thumbnail":
-                    setNewThumb(event.target.files[0])
-                    break
-                case "header":
-                    setNewHeader(event.target.files[0])
-            }
-        }
-    }
-
     function playerSetupDialog() {
-        switch (selectedRegion) {
+        if (!getUser())
+            return
+        switch (region) {
             case "jp":
                 return (
                     <Dialog open={showSetupDialog} onClose={() => openSetupDialog(false)} fullScreen>
@@ -179,32 +158,8 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                             <TextField label="表示名" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
                             <TextField label="説明 (あなた自身について簡単に説明してください)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
                             <Typography variant="h5" style={{ marginTop: 32 }} paragraph>オプション</Typography>
-                            <Typography variant="h6">サムネイル</Typography>
-                            {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
-                            {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} alt={""} /> : <AccountCircle style={{ width: 100, height: 100 }} />}
-                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
-                                setThumbLoading(true)
-                                updateThumbnail(getUser()!.id, newThumb!).then(url => {
-                                    setThumbnailUrl(url)
-                                }).catch(error => {
-                                    setErrorThumbMsg(error.message)
-                                }).finally(() => setThumbLoading(false))
-                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
-                                アップロード
-                            </Button>}<br />
-                            <Typography variant="h6">ヘッダー</Typography>
-                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
-                            <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} />
-                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />{(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
-                                setHeaderLoading(true)
-                                updateHeader(getUser()!.id, newHeader!).then(url => {
-                                    setHeaderUrl(url)
-                                }).catch(error => {
-                                    setErrorHeaderMsg(error.message)
-                                }).finally(() => setHeaderLoading(false))
-                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
-                                アップロード
-                            </Button>}
+                            <ThumbnailUploader uid={getUser()!.id} region={region} onSuccess={url => setThumbnailUrl(url)} /><br />
+                            <HeaderUploader uid={getUser()!.id} region={region} imagePreviewWidth={width * 0.5} />
                             <TextField label="地元" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} fullWidth />
                             <TextField label="ポジション" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} fullWidth select>
                                 <MenuItem key={""} value={""}>Anywhere</MenuItem>
@@ -227,7 +182,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                     setSetupErrorMsg("説明は必須です")
                                     return
                                 }
-                                addUserToDB(getUser()!.id, name, bio, thumbnail_url, localArea, position).then(() => {
+                                addUserToDB(getUser()!.id, name, bio, localArea, position).then(() => {
                                     openSetupDialog(false)
                                     setSetupCookie('user_setup_finished', true)
                                     onStateChanged(getUser())
@@ -251,32 +206,8 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                             <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} fullWidth />
                             <TextField label="Bio (Simply describe yourself)" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
                             <Typography variant="h5" style={{ marginTop: 32 }} paragraph>Optional</Typography>
-                            <Typography variant="h6">Thumbnail</Typography>
-                            {(errorThumbMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorThumbMsg}</Alert> : null}
-                            {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} alt={""} /> : <AccountCircle style={{ width: 100, height: 100 }} />}
-                            <input type="file" onChange={e => pickImage(e, "thumbnail")} className="filetype" accept="image/*" id="group_image" /><br />{(thumbLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newThumb} variant="outlined" onClick={() => {
-                                setThumbLoading(true)
-                                updateThumbnail(getUser()!.id, newThumb!).then(url => {
-                                    setThumbnailUrl(url)
-                                }).catch(error => {
-                                    setErrorThumbMsg(error.message)
-                                }).finally(() => setThumbLoading(false))
-                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
-                                Upload
-                            </Button>}<br />
-                            <Typography variant="h6">Header</Typography>
-                            {(errorHeaderMsg) ? <Alert severity="error" style={{ marginBottom: 8 }}>{errorHeaderMsg}</Alert> : null}
-                            <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={width * 0.5} height={300} />
-                            <input type="file" onChange={e => pickImage(e, "header")} className="filetype" accept="image/*" id="group_image" /><br />{(headerLoading) ? <CircularProgress style={{ color: 'white' }} /> : <Button disabled={!newHeader} variant="outlined" onClick={() => {
-                                setHeaderLoading(true)
-                                updateHeader(getUser()!.id, newHeader!).then(url => {
-                                    setHeaderUrl(url)
-                                }).catch(error => {
-                                    setErrorHeaderMsg(error.message)
-                                }).finally(() => setHeaderLoading(false))
-                            }} color="primary" style={{ backgroundColor: 'red', color: "white" }}>
-                                Upload
-                            </Button>}
+                            <ThumbnailUploader uid={getUser()!.id} region={region} onSuccess={url => setThumbnailUrl(url)} /><br />
+                            <HeaderUploader uid={getUser()!.id} region={region} imagePreviewWidth={width * 0.5} />
                             <TextField label="Local area" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} fullWidth />
                             <TextField label="Position" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} fullWidth select>
                                 <MenuItem key={""} value={""}>Anywhere</MenuItem>
@@ -299,7 +230,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                     setSetupErrorMsg("Bio is required")
                                     return
                                 }
-                                addUserToDB(getUser()!.id, name, bio, thumbnail_url, localArea, position).then(() => {
+                                addUserToDB(getUser()!.id, name, bio, localArea, position).then(() => {
                                     openSetupDialog(false)
                                     setSetupCookie('user_setup_finished', true)
                                     onStateChanged(getUser())
@@ -311,6 +242,55 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
         }
     }
 
+    function renderDesktopNavMenu() {
+        switch (region) {
+            case "jp":
+                return <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region)}>
+                        ホーム <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region + "/games")}>
+                        ゲーム <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region + "/tournaments")}>
+                        トーナメント <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
+                        ©️ AIZero Inc. 2021     国: {(changingRegion) ? <CircularProgress /> : <TextField onChange={e => {
+                            changeRegion(true)
+                            router.push("../" + e.target.value)
+                        }} value={region} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
+                            {regions.map(region => (
+                                <MenuItem key={region.key} value={region.value}>{region.label}</MenuItem>
+                            ))}
+                        </TextField>}
+                    </div>
+                </div>
+                break;
+            default:
+                return <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region)}>
+                        Home <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region + "/games")}>
+                        Games <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + region + "/tournaments")}>
+                        Tournaments <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                    </Typography>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
+                        ©️ AIZero Inc. 2021     Region: {(changingRegion) ? <CircularProgress /> : <TextField onChange={e => {
+                            changeRegion(true)
+                            router.push("../" + e.target.value)
+                        }} value={region} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
+                            {regions.map(region => (
+                                <MenuItem key={region.key} value={region.value}>{region.label}</MenuItem>
+                            ))}
+                        </TextField>}
+                    </div>
+                </div>
+        }
+    }
     if (isMobile) {
         return (
             <div className={styles.root} style={{ overflow: "hidden" }}>
@@ -350,7 +330,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         value={selectedIndex}
                         onChange={(e, value) => {
                             setSelectedIndex(value)
-                            router.push("/" + selectedRegion + "/" + value)
+                            router.push("/" + region + "/" + value)
                         }}
                         showLabels
                         style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}
@@ -400,29 +380,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                         closingSigninDialog()
                     }} />
                     <div style={{ display: "flex" }}>
-                        <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion)}>
-                                {(selectedRegion == "au") ? "Home" : "ホーム"} <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
-                            </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/games")}>
-                                {(selectedRegion == "au") ? "Games" : "ゲーム"} <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
-                            </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/tournaments")}>
-                                {(selectedRegion == "au") ? "Tournaments" : "トーナメント"} <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
-                            </Typography>
-                            <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + selectedRegion + "/search")}>
-                                Search <Search style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
-                            </Typography>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
-                                ©️ AIZero Inc. 2021     {(selectedRegion == "au") ? "Region" : "国"}<TextField onChange={e => {
-                                    setRegion(e.target.value)
-                                    router.push("../" + selectedRegion)
-                                }} value={selectedRegion} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
-                                    <MenuItem key="australia" value="au">Australia</MenuItem>
-                                    <MenuItem key="japan" value="jp">日本</MenuItem>
-                                </TextField>
-                            </div>
-                        </div>
+                        {renderDesktopNavMenu()}
                         <div style={{ width: "50%", height: height - 70, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme, overflow: "scroll" }}>
                             {content}
                         </div>
@@ -436,7 +394,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                 </Snackbar>
                 {playerSetupDialog()}
                 {accountMenu()}
-            </div>
+            </div >
         )
     }
 }
