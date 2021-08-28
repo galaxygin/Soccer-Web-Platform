@@ -78,7 +78,7 @@ export default function GameView({ metadata }: props) {
         if (metadata) {
             chatSubscription = supabase.from('game_chats:game_id=eq.' + metadata!.id)
                 .on('INSERT', payload => {
-                    getSimpleProfile(payload.new.sender).then(user => setMessages(prevState => [...prevState, { id: payload.new.id, game_id: payload.new.game_id, sender: { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url }, content: payload.new.content, timestamp: new Date(payload.new.timestamp) }]))
+                    getSimpleProfile(payload.new.sender).then(user => setMessages(prevState => [...prevState, { id: payload.new.id, game_id: payload.new.game_id, sender: { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url, is_private: user.is_private }, content: payload.new.content, timestamp: new Date(payload.new.timestamp) }]))
                 }).on('DELETE', payload => {
                     setMessages(prevState => prevState.filter(message => message.id !== payload.old.id))
                 }).subscribe()
@@ -182,7 +182,7 @@ export default function GameView({ metadata }: props) {
                         <Dialog open={showParticipants} onClick={() => openParticipants(false)} fullScreen>
                             <AppBar style={{ position: "relative" }}>
                                 <Toolbar>
-                                    <IconButton edge="start" color="inherit" onClick={() => openEditDialog(false)} aria-label="close">
+                                    <IconButton edge="start" color="inherit" onClick={() => openParticipants(false)} aria-label="close">
                                         <Close />
                                     </IconButton>
                                     <Typography variant="h6" style={{ flex: 1 }}>
@@ -384,7 +384,7 @@ export default function GameView({ metadata }: props) {
         }
     }
 
-    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(game) ? game.title : "Private or couldn't get title"} description={(game) ? game.description : "Private or couldn't get description"} />} region={"au"} onStateChanged={user => {
+    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "Private or couldn't get title"} description={(metadata) ? metadata.description : "Private or couldn't get description"} thumbnail_url={""} url={""} />} region={"au"} onStateChanged={user => {
         setUser(user)
         if (metadata) {
             if (user) {

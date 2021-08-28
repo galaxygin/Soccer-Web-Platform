@@ -71,7 +71,7 @@ export async function getGame(id: string): Promise<Game> {
         throw error
     if (data)
         if (data.length > 0)
-            return { id: id, organizer: data[0].organizer, title: data[0].title, description: data[0].description, location: data[0].location, date: data[0].date, time: data[0].time, player_level: data[0].player_level, passcode: data[0].passcode, participants: data[0].participants, max_players: data[0].max_players, min_players: data[0].min_players, custom_rules: data[0].custom_rules, requirements: data[0].requirements, status: data[0].status }
+            return { id: id, organizer: data[0].organizer, title: data[0].title, description: data[0].description, location: data[0].location, date: data[0].date, time: data[0].time, player_level: data[0].player_level, passcode: data[0].passcode, participants: data[0].participants, max_players: data[0].max_players, min_players: data[0].min_players, custom_rules: data[0].custom_rules, requirements: data[0].requirements, status: data[0].status, region: data[0].region }
     throw new Error("Could not get game details")
 }
 
@@ -81,7 +81,7 @@ export async function getGameWithPasscode(id: string, passcode: string): Promise
         throw error
     if (data)
         if (data.length > 0)
-            return { id: id, organizer: data[0].organizer, title: data[0].title, description: data[0].description, location: data[0].location, date: data[0].date, time: data[0].time, player_level: data[0].player_level, passcode: passcode, participants: data[0].participants, max_players: data[0].max_players, min_players: data[0].min_players, custom_rules: data[0].custom_rules, requirements: data[0].requirements, status: data[0].status }
+            return { id: id, organizer: data[0].organizer, title: data[0].title, description: data[0].description, location: data[0].location, date: data[0].date, time: data[0].time, player_level: data[0].player_level, passcode: passcode, participants: data[0].participants, max_players: data[0].max_players, min_players: data[0].min_players, custom_rules: data[0].custom_rules, requirements: data[0].requirements, status: data[0].status, region: data[0].region }
     throw new Error("Could not get game details")
 }
 

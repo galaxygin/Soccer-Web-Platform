@@ -22,8 +22,8 @@ export async function signUp(email: string, password: string): Promise<User> {
     return user!
 }
 
-export async function addUserToDB(uid: string, name: string, bio: string, thumbnail_url: string | null, local_area: string | null, position: string) {
-    const { data, error } = await supabase.from('players').insert([{ uid: uid, name: name, bio: bio, thumbnail_url: thumbnail_url, local_area: local_area, position: position }])
+export async function addUserToDB(uid: string, name: string, bio: string, local_area?: string, position?: string) {
+    const { data, error } = await supabase.from('players').insert([{ uid: uid, name: name, bio: bio, local_area: local_area, position: position }])
     if (error)
         throw error
     return data
