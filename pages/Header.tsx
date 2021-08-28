@@ -15,7 +15,7 @@ export default function Header({ title = "Soccer", description = "A platform for
         <meta property="og:url" content={url} />
         <meta property="og:image" content={thumbnail_url} />
         <meta property="og:description" content={description} />
-        <meta property="og:type" content={"video.movie"} />
+        <meta property="og:type" content="image" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:image" content={thumbnail_url} />
