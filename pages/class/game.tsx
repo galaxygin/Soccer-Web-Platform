@@ -24,7 +24,6 @@ interface Props extends BaseProps {
 interface States extends BaseStates {
     game: Game | null
     isJoining: boolean
-    errorMsg: string
     loading: boolean
     showPassDialog: boolean
     passcode: string
@@ -42,11 +41,10 @@ interface States extends BaseStates {
 
 class GameView extends PageBase<Props, States> {
     state: States = {
-        region: "au",
+        region: "class",
         selectedNavValue: "/",
         game: null,
         isJoining: false,
-        errorMsg: "",
         loading: true,
         showPassDialog: false,
         passcode: "",
@@ -67,40 +65,41 @@ class GameView extends PageBase<Props, States> {
         if (this.props.metadata) {
             if (this.state.user) {
                 if (this.props.metadata.organizer == this.state.user?.id) {
-                    this.reloadDetails()
-                    this.loadChat()
+                    this.initialLoad()
                     return
                 }
                 checkIsAlreadyJoining(this.props.metadata.id, this.state.user.id).then(result => {
                     this.setState({ isJoining: result })
                     if (result) {
-                        this.reloadDetails()
-                        this.loadChat()
+                        this.initialLoad()
                     } else
                         if (this.props.metadata!.passcode) {
                             this.setState({ loading: false, showPassDialog: true })
                         } else {
-                            this.reloadDetails()
-                            this.loadChat()
+                            this.initialLoad()
                         }
-                }).catch(error => this.setState({ errorMsg: error.message }))
+                }).catch(error => this.showSnackErrorMsg(error.message))
                 return
             }
             if (this.props.metadata.passcode) {
                 this.setState({ loading: false, showPassDialog: true })
                 return
             }
-            this.reloadDetails()
-            this.loadChat()
-            this.chatSubscription = supabase.from('game_chats:game_id=eq.' + this.props.metadata!.id)
-                .on('INSERT', payload => {
-                    getSimpleProfile(payload.new.sender).then(user => this.setState(prevState => ({ messages: [...prevState.messages, { id: payload.new.id, game_id: payload.new.game_id, sender: { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url }, content: payload.new.content, timestamp: new Date(payload.new.timestamp) }] })))
-                }).on('DELETE', payload => {
-                    this.setState(prevState => ({ messages: prevState.messages.filter(message => message.id !== payload.old.id) }))
-                }).subscribe()
+            this.initialLoad()
         } else {
             this.setState({ loading: false })
         }
+    }
+
+    initialLoad() {
+        this.reloadDetails()
+        this.loadChat()
+        this.chatSubscription = supabase.from('test_game_chats:game_id=eq.' + this.props.metadata!.id)
+            .on('INSERT', payload => {
+                getSimpleProfile(payload.new.sender).then(user => this.setState(prevState => ({ messages: [...prevState.messages, { id: payload.new.id, game_id: payload.new.game_id, sender: { uid: user.uid, name: user.name, thumbnail_url: user.thumbnail_url, is_private: user.is_private }, content: payload.new.content, timestamp: new Date(payload.new.timestamp) }] }))).catch(error => this.showSnackErrorMsg(error.message))
+            }).on('DELETE', payload => {
+                this.setState(prevState => ({ messages: prevState.messages.filter(message => message.id !== payload.old.id) }))
+            }).subscribe()
     }
 
     onBaseWillClose() {
@@ -157,202 +156,134 @@ class GameView extends PageBase<Props, States> {
     }
 
     renderHeader() {
-        return <Header title={(this.props.metadata?.title) ? this.props.metadata.title : "Private or couldn't get title"} description={(this.props.metadata) ? this.props.metadata.description : "Private or couldn't get description"} />
+        return <Header title={(this.props.metadata?.title) ? this.props.metadata.title : "Private or couldn't get title"} description={(this.props.metadata) ? this.props.metadata.description : "Private or couldn't get description"} thumbnail_url={""} url={""} />
     }
 
     renderContent() {
         if (this.state.game) {
-            if (this.state.user)
-                return (
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                        <Dialog open={this.state.showJoinConfirmDialog} fullWidth>
-                            <DialogTitle>Consent</DialogTitle>
-                            <DialogContent>
-                                Do you want to join this game?<br />
-                                By joining this game, you must follow the rules and requirement of the game.<br />
-                                Also, if you do any of the following during the game, you'll get warning score that gives you step by step restrictions<br />
-                                ・No show<br />
-                                ・Violence<br />
-                                ・Harrassment<br />
-                                ・Racism<br />
-                                ・Breaching the rules<br />
-                                {(this.state.joinError) ? <Alert severity="error">{this.state.joinError}</Alert> : null}<br />
-                            </DialogContent>
-                            <DialogActions>
-                                <Button onClick={() => this.setState({ showJoinConfirmDialog: false })}>Go back</Button>
-                                <div style={{ flexGrow: 1 }} />
-                                {(this.state.joinLoading) ? <CircularProgress /> : <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
-                                    this.setState({ joinLoading: true })
-                                    joinAGame(this.state.game!.id, this.state.user!.id).then(() => {
-                                        this.setState({ isJoining: true, showJoinConfirmDialog: false, joinLoading: false })
-                                        this.showSnackSuccessMsg("Joined the game successfully")
-                                    }).catch(error => this.setState({ joinLoading: false }))
-                                }}>Join</Button>}
-                            </DialogActions>
-                        </Dialog>
-                        <OrganizeForm show={this.state.showEditDialog} uid={this.state.user.id} game_id={this.state.game.id} _title={this.state.game.title} _description={this.state.game.description} _location={this.state.game.location} _date={new Date(this.state.game.date)} _time={this.state.game.time.toString()} _playerLevel={this.state.game.player_level} _passcode={this.state.passcode} _maxPlayers={this.state.game.max_players} _minPlayers={this.state.game.min_players} _customRules={this.state.game.custom_rules} _requirements={this.state.game.requirements} editing posted={() => {
-                            this.setState({ showEditDialog: false })
-                            this.reloadDetails()
-                            this.showSnackSuccessMsg("The game details updated successfully")
-                        }} onClose={() => this.setState({ showEditDialog: false })} onCancelled={() => {
-                            this.setState(prevState => ({ game: { ...prevState.game!, status: "cancelled" }, showEditDialog: false }))
-                        }} />
-                        <Dialog open={this.state.showParticipants} onClick={() => this.setState({ showParticipants: false })} fullScreen>
-                            <AppBar style={{ position: "relative" }}>
-                                <Toolbar>
-                                    <IconButton edge="start" color="inherit" onClick={() => this.setState({ showParticipants: false })} aria-label="close">
-                                        <Close />
-                                    </IconButton>
-                                    <Typography variant="h6" style={{ flex: 1 }}>
-                                        Participants
-                                    </Typography>
-                                </Toolbar>
-                            </AppBar>
-                            <ParticipantsView game_id={this.props.metadata!.id} />
-                        </Dialog>
-                        <Image src={landscapeFieldImgURI} width={this.state.width! * 0.5} height={300} />
-                        <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
-                                <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                                    {this.state.game.title}
-                                </Typography>
-                                {(this.state.game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
-                                {(this.state.game.organizer.uid == this.state.user.id && this.state.game.status != "cancelled" && new Date() < new Date(this.state.game?.date + "T" + this.state.game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => this.setState({ showEditDialog: true })}>
-                                    <Edit style={{ color: "white" }} />
-                                </IconButton> : null}
-                            </div>
-                            <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/" + "class" + "/player", query: { uid: this.state.game!.organizer.uid } })}>
-                                    {(this.state.game.organizer.thumbnail_url) ? <img src={this.state.game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
-                                        <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
-                                            {this.state.game.organizer.name}
-                                        </div>
-                                        Organizer
-                                    </div>
-                                </div>
-                                {this.state.game.description}<br />
-                                Location: {this.state.game.location}<br />
-                                Date: {this.state.game.date + " " + removeSecondsFromTime(this.state.game.time)}<br />
-                                Level: {getPlayerLevel(this.state.game.player_level)}<br />
-                                {(this.state.game.max_players) ? <>Max players: {this.state.game.max_players}<br /></> : null}
-                                {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
-                                    <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => this.setState({ showParticipants: true })}>
-                                        Current players ({this.state.game.participants})
-                                    </Button>
-                                </div> : null}
-                                {this.renderByStatus()}
-                            </Typography>
-                        </Typography>
-                        <div>
-                            <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                <TextField label="Send message to participants" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ message: e.target.value })} value={this.state.message} fullWidth style={{ marginTop: 0 }} />
-                                {(this.state.sending) ? <CircularProgress /> : <IconButton onClick={() => {
-                                    this.setState({ sending: true })
-                                    sendChatMessage(this.state.game!.id, this.state.user!.id, this.state.message).then(() => this.setState({ message: "" })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ sending: false }))
-                                }}>
-                                    <SendTwoTone style={{ color: themeColor }} />
-                                </IconButton>}
-                            </div>
-                            <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
-                                {this.state.messages.map(message => (
-                                    <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
-                                        <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
-                                            {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} onClick={() => router.push({ pathname: "/" + "class" + "/player", query: { uid: message.sender.uid } })} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                            <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
-                                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
-                                                    <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
-                                                        {message.sender.name}
-                                                    </Typography>
-                                                    {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
-                                                    {(message.sender.uid == this.state.user!.id) ? <IconButton onClick={() => deleteChatMessage(message.id)}>
-                                                        <DeleteTwoTone />
-                                                    </IconButton> : null}
-                                                </div>
-                                                {message.content}
-                                            </div>
-                                        </Typography>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </div>
-                    </div >
-                )
-            else
-                return (
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                        <Dialog open={this.state.showParticipants} onClick={() => this.setState({ showParticipants: false })} fullScreen>
-                            <AppBar style={{ position: "relative" }}>
-                                <Toolbar>
-                                    <IconButton edge="start" color="inherit" onClick={() => this.setState({ showParticipants: false })} aria-label="close">
-                                        <Close />
-                                    </IconButton>
-                                    <Typography variant="h6" style={{ flex: 1 }}>
-                                        Participants
-                                    </Typography>
-                                </Toolbar>
-                            </AppBar>
-                            <ParticipantsView game_id={this.props.metadata!.id} />
-                        </Dialog>
-                        <Image src={landscapeFieldImgURI} width={this.state.width! * 0.5} height={300} />
-                        <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
-                                <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                                    {this.state.game.title}
-                                </Typography>
-                                {(this.state.game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
-                            </div>
-                            <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/au/player", query: { uid: this.state.game!.organizer.uid } })}>
-                                    {(this.state.game.organizer.thumbnail_url) ? <img src={this.state.game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
-                                        <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
-                                            {this.state.game.organizer.name}
-                                        </div>
-                                        Organizer
-                                    </div>
-                                </div>
-                                {this.state.game.description}<br />
-                                Location: {this.state.game.location}<br />
-                                Date: {this.state.game.date + " " + removeSecondsFromTime(this.state.game.time)}<br />
-                                Level: {getPlayerLevel(this.state.game.player_level)}<br />
-                                {(this.state.game.max_players) ? <>Max players: {this.state.game.max_players}<br /></> : null}
-                                {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
-                                    <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => this.setState({ showParticipants: true })}>
-                                        Current players ({this.state.game.participants})
-                                    </Button>
-                                </div> : null}
-                                {this.renderByStatus()}
-                            </Typography>
-                        </Typography>
-                        <div>
-                            <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                <TextField disabled label="Send message to participants" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ message: e.target.value })} value={this.state.message} fullWidth style={{ marginTop: 0 }} />
-                                <IconButton disabled >
-                                    <SendTwoTone style={{ color: themeColor }} />
+            return (
+                <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                    {(this.state.user) ? <Dialog open={this.state.showJoinConfirmDialog} fullWidth>
+                        <DialogTitle>Consent</DialogTitle>
+                        <DialogContent>
+                            Do you want to join this game?<br />
+                            By joining this game, you must follow the rules and requirement of the game.<br />
+                            Also, if you do any of the following during the game, you'll get warning score that gives you step by step restrictions<br />
+                            ・No show<br />
+                            ・Violence<br />
+                            ・Harrassment<br />
+                            ・Racism<br />
+                            ・Breaching the rules<br />
+                            {(this.state.joinError) ? <Alert severity="error">{this.state.joinError}</Alert> : null}<br />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => this.setState({ showJoinConfirmDialog: false })}>Go back</Button>
+                            <div style={{ flexGrow: 1 }} />
+                            {(this.state.joinLoading) ? <CircularProgress /> : <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
+                                this.setState({ joinLoading: true })
+                                joinAGame(this.state.game!.id, this.state.user!.id).then(() => {
+                                    this.setState({ isJoining: true, showJoinConfirmDialog: false, joinLoading: false })
+                                    this.showSnackSuccessMsg("Joined the game successfully")
+                                }).catch(error => this.setState({ joinLoading: false }))
+                            }}>Join</Button>}
+                        </DialogActions>
+                    </Dialog> : null}
+                    {(this.state.user) ? <OrganizeForm show={this.state.showEditDialog} uid={this.state.user.id} game_id={this.state.game.id} _title={this.state.game.title} _description={this.state.game.description} _location={this.state.game.location} _date={new Date(this.state.game.date)} _time={this.state.game.time.toString()} _playerLevel={this.state.game.player_level} _passcode={this.state.passcode} _maxPlayers={this.state.game.max_players} _minPlayers={this.state.game.min_players} _customRules={this.state.game.custom_rules} _requirements={this.state.game.requirements} editing posted={() => {
+                        this.setState({ showEditDialog: false })
+                        this.reloadDetails()
+                        this.showSnackSuccessMsg("The game details updated successfully")
+                    }} onClose={() => this.setState({ showEditDialog: false })} onCancelled={() => {
+                        this.setState(prevState => ({ game: { ...prevState.game!, status: "cancelled" }, showEditDialog: false }))
+                    }} /> : null}
+                    <Dialog open={this.state.showParticipants} onClick={() => this.setState({ showParticipants: false })} fullScreen>
+                        <AppBar style={{ position: "relative" }}>
+                            <Toolbar>
+                                <IconButton edge="start" color="inherit" onClick={() => this.setState({ showParticipants: false })} aria-label="close">
+                                    <Close />
                                 </IconButton>
-                            </div>
-                            <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
-                                {this.state.messages.map(message => (
-                                    <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
-                                        <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
-                                            {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                            <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
-                                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
-                                                    <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
-                                                        {message.sender.name}
-                                                    </Typography>
-                                                    {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
-                                                </div>
-                                                {message.content}
-                                            </div>
-                                        </Typography>
-                                    </ListItem>
-                                ))}
-                            </List>
+                                <Typography variant="h6" style={{ flex: 1 }}>
+                                    Participants
+                                </Typography>
+                            </Toolbar>
+                        </AppBar>
+                        <ParticipantsView game_id={this.props.metadata!.id} />
+                    </Dialog>
+                    <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
+                        <Image src={landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} />
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
+                            <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
+                                {this.state.game.title}
+                            </Typography>
+                            {(this.state.game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
+                            {(this.state.game.organizer.uid == this.state.user?.id && this.state.game.status != "cancelled" && new Date() < new Date(this.state.game?.date + "T" + this.state.game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => this.setState({ showEditDialog: true })}>
+                                <Edit style={{ color: "white" }} />
+                            </IconButton> : null}
                         </div>
-                    </div >
-                )
+                        <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/" + "class" + "/player", query: { uid: this.state.game!.organizer.uid } })}>
+                                {(this.state.game.organizer.thumbnail_url) ? <img src={this.state.game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
+                                    <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
+                                        {this.state.game.organizer.name}
+                                    </div>
+                                    Organizer
+                                </div>
+                            </div>
+                            {this.state.game.description}<br />
+                            Location: {this.state.game.location}<br />
+                            Date: {this.state.game.date + " " + removeSecondsFromTime(this.state.game.time)}<br />
+                            Level: {getPlayerLevel(this.state.game.player_level)}<br />
+                            {(this.state.game.max_players) ? <>Max players: {this.state.game.max_players}<br /></> : null}
+                            {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
+                                <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => this.setState({ showParticipants: true })}>
+                                    Current players ({this.state.game.participants})
+                                </Button>
+                            </div> : null}
+                            {this.renderByStatus()}
+                        </Typography>
+                    </Typography>
+                    <div>
+                        <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                            <TextField label="Send message to participants" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ message: e.target.value })} value={this.state.message} fullWidth style={{ marginTop: 0 }} />
+                            {(this.state.sending) ? <CircularProgress /> : <IconButton onClick={() => {
+                                if (this.state.user) {
+                                    if (this.state.message) {
+                                        this.setState({ sending: true })
+                                        sendChatMessage(this.state.game!.id, this.state.user!.id, this.state.message).then(() => this.setState({ message: "" })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ sending: false }))
+                                    } else {
+                                        this.showSnackErrorMsg("Message is empty")
+                                    }
+                                } else {
+                                    this.showSigninDialog()
+                                }
+                            }}>
+                                <SendTwoTone style={{ color: themeColor }} />
+                            </IconButton>}
+                        </div>
+                        <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
+                            {this.state.messages.map(message => (
+                                <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
+                                    <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
+                                        {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} onClick={() => router.push({ pathname: "/" + this.state.region + "/player", query: { uid: message.sender.uid } })} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                        <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
+                                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
+                                                <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
+                                                    {message.sender.name}
+                                                </Typography>
+                                                {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
+                                                {(message.sender.uid == this.state.user?.id) ? <IconButton onClick={() => deleteChatMessage(message.id)}>
+                                                    <DeleteTwoTone />
+                                                </IconButton> : null}
+                                            </div>
+                                            {message.content}
+                                        </div>
+                                    </Typography>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </div>
+                </div >
+            )
         } else {
             if (this.state.loading)
                 return <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -385,8 +316,7 @@ class GameView extends PageBase<Props, States> {
                             </DialogActions>
                         </Dialog>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
-                            {(this.state.errorMsg) ? <Alert severity="error">{this.state.errorMsg}</Alert> : null}<br />
-                            Couldn't get game details.
+                            Couldn't get game details. Please try again
                         </Typography>
                     </div >
                 )

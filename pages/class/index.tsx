@@ -21,7 +21,7 @@ interface States extends BaseStates {
 
 class HomeView extends PageBase<BaseProps, States> {
     state: States = {
-        region: "au",
+        region: "class",
         selectedNavValue: "/",
         loadingMyGames: true,
         myGames: [],
@@ -39,17 +39,17 @@ class HomeView extends PageBase<BaseProps, States> {
 
     fetchMyGames() {
         this.setState({ loadingMyGames: true })
-        getMyGames(this.state.user!.id).then(games => this.setState({ myGames: games })).catch(error => console.log(error.message)).finally(() => this.setState({ loadingMyGames: false }))
+        getMyGames(this.state.user!.id).then(games => this.setState({ myGames: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingMyGames: false }))
     }
 
     fetchWeekGames() {
         this.setState({ loadingGamesOfTheWeek: true })
-        getGamesOfTheWeek().then(games => this.setState({ gamesOfTheWeek: games })).catch(error => console.log(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
+        getGamesOfTheWeek().then(games => this.setState({ gamesOfTheWeek: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
     }
 
     renderMyGames() {
         if (this.state.myGames.length > 0)
-            return <GameCollectionNoWrap games={this.state.myGames} region={"au"} />
+            return <GameCollectionNoWrap games={this.state.myGames} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned today
@@ -58,7 +58,7 @@ class HomeView extends PageBase<BaseProps, States> {
 
     renderGamesOfTheWeek() {
         if (this.state.gamesOfTheWeek.length > 0)
-            return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={"au"} />
+            return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned this week

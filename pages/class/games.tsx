@@ -30,7 +30,7 @@ interface States extends BaseStates {
 
 class GamesView extends PageBase<BaseProps, States> {
     state: States = {
-        region: "au",
+        region: "class",
         selectedNavValue: "games",
         loadingTodaysGames: true,
         todaysGames: [],
@@ -54,24 +54,24 @@ class GamesView extends PageBase<BaseProps, States> {
 
     fetchTodaysGames() {
         this.setState({ loadingTodaysGames: true })
-        getTodaysGames().then(games => { console.log(games); this.setState({ todaysGames: games }); }).catch(error => console.log(error.message)).finally(() => this.setState({ loadingTodaysGames: false }))
+        getTodaysGames().then(games => this.setState({ todaysGames: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingTodaysGames: false }))
     }
 
     fetchWeekGames() {
         this.setState({ loadingGamesOfTheWeek: true })
-        getGamesOfTheWeek().then(games => { console.log(games); this.setState({ gamesOfTheWeek: games }); }).catch(error => console.log(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
+        getGamesOfTheWeek().then(games => this.setState({ gamesOfTheWeek: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
     }
 
     fetchSearchGames() {
         if (this.state.searching)
             return
         this.setState({ searching: true })
-        searchGames(this.state.searchText, this.state.location, this.state.level, this.state.date, this.state.time).then(games => this.setState({ searchResult: games })).catch(error => { console.log(error.message) }).finally(() => this.setState({ searching: false }))
+        searchGames(this.state.searchText, this.state.location, this.state.level, this.state.date, this.state.time).then(games => this.setState({ searchResult: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ searching: false }))
     }
 
     renderTodaysGames() {
         if (this.state.todaysGames.length > 0)
-            return <GameCollectionNoWrap games={this.state.todaysGames} region={"au"} />
+            return <GameCollectionNoWrap games={this.state.todaysGames} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned today
@@ -80,7 +80,7 @@ class GamesView extends PageBase<BaseProps, States> {
 
     renderGamesOfTheWeek() {
         if (this.state.gamesOfTheWeek.length > 0)
-            return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={"au"} />
+            return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned this week
@@ -91,7 +91,7 @@ class GamesView extends PageBase<BaseProps, States> {
         if (this.state.searchResult.length > 0)
             return <div>
                 {this.renderFilters()}
-                <GameCollection games={this.state.searchResult} region={"au"} />
+                <GameCollection games={this.state.searchResult} region={this.state.region} />
             </div>
         else
             return <div>

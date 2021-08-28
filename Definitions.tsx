@@ -139,7 +139,8 @@ export type Region = {
 
 export const regions: Region[] = [
     { key: "australia", value: "au", label: "Australia" },
-    { key: "japan", value: "jp", label: "日本" }
+    { key: "japan", value: "jp", label: "日本" },
+    { key: "class", value: "class", label: "Class base" }
 ]
 
 export const getPlayerLevel = (level: number) => {
