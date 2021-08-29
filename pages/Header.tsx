@@ -1,7 +1,7 @@
 import Head from 'next/head'
-import { appName } from '../Definitions'
+import { appName, baseUrl } from '../Definitions'
 
-export default function Header({ title = "Soccer", description = "A platform for soccer players to look and organise a game", url = "", thumbnail_url = "" }) {
+export default function Header({ site_name = appName, title = "Soccer", description = "A platform for soccer players to look and organise a game", url = baseUrl, thumbnail_url = "" }) {
     return <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
@@ -10,7 +10,7 @@ export default function Header({ title = "Soccer", description = "A platform for
         <title>{title}</title>
         <meta name="description" content={description} />
 
-        <meta property="og:site_name" content={appName} />
+        <meta property="og:site_name" content={site_name} />
         <meta property="og:title" content={title} />
         <meta property="og:url" content={url} />
         <meta property="og:image" content={thumbnail_url} />

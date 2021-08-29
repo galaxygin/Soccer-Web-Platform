@@ -53,7 +53,7 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
                     <Link href={"/" + region + "/game?id=" + game.id}>
                         <Image src={landscapeFieldImgURI} width={size} height={150} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
-                            <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
+                            <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 30 }}>
                                 {game.title}
                             </Typography>
                             <LockTwoTone style={{ color: "gray" }} />
@@ -73,7 +73,7 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
                         <Image src={landscapeFieldImgURI} width={size} height={150} />
-                        <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden" }}>
+                        <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden", maxHeight: 30 }}>
                             {game.title}
                         </Typography>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
@@ -114,7 +114,7 @@ export function GameCollection({ games, region }: GameHeaderCellProps) {
                     <Link href={"/" + region + "/game?id=" + game.id}>
                         <Image src={landscapeFieldImgURI} width={size} height={150} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
-                            <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
+                            <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 30 }}>
                                 {game.title}
                             </Typography>
                             <LockTwoTone style={{ color: "gray" }} />
@@ -134,7 +134,7 @@ export function GameCollection({ games, region }: GameHeaderCellProps) {
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
                         <Image src={landscapeFieldImgURI} width={size} height={150} />
-                        <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden" }}>
+                        <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden", maxHeight: 30 }}>
                             {game.title}
                         </Typography>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>

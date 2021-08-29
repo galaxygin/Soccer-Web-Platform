@@ -87,7 +87,7 @@ export default function GamesView() {
         if (searching)
             return
         setSearching(true)
-        searchGames(searchText, location, level, date, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
+        searchGames(searchText, level, date, location, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
     }
 
     function renderTodaysGame() {
@@ -131,7 +131,7 @@ export default function GamesView() {
                 setLevel(0)
                 setDate(new Date())
                 setTime("")
-                searchGames(searchText).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
+                searchGames(searchText, 0, new Date(), "", "").then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
             }}>
                 <Close />
             </IconButton>
