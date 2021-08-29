@@ -2,7 +2,7 @@ import { ImageList, ImageListItem, Link, Typography } from "@material-ui/core";
 import { AccountCircle, LockTwoTone } from "@material-ui/icons";
 import React, { useEffect, useState } from "react";
 import { GameHeader, getPlayerLevel, getPlayerLevelJP, landscapeFieldImgURI } from "../Definitions";
-import { defaultTheme, darkerTextColor } from "../public/assets/styles/styles.web";
+import { defaultTheme, darkerTextColor, useStyles } from "../public/assets/styles/styles.web";
 import { removeSecondsFromTime } from "./DateManager";
 import Image from "next/image"
 import { isMobile } from "react-device-detect";
@@ -35,6 +35,7 @@ function renderParticipantsCount(participants: number, region: string) {
 }
 
 export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
+    const styles = useStyles()
     const [size, setSize] = useState(0)
 
     useEffect(() => {
@@ -51,7 +52,7 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
             if (game.passcode)
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
-                        <Image src={landscapeFieldImgURI} width={size} height={150} />
+                        <Image src={landscapeFieldImgURI} width={size} height={150} alt={game.title} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
                             <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 30 }}>
                                 {game.title}
@@ -60,7 +61,7 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
                         </div>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", height: 30 }}>
-                                {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={30} height={30} style={{ borderRadius: 15 }} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={30} height={30} className={styles.thumbnailCircle30} alt={game.organizer.name} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
                                 {game.organizer.name}
                             </Typography>
                             <div style={{ height: 20, marginTop: 4, marginBottom: 4 }} />
@@ -72,13 +73,13 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
             else
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
-                        <Image src={landscapeFieldImgURI} width={size} height={150} />
+                        <Image src={landscapeFieldImgURI} width={size} height={150} alt={game.title} />
                         <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden", maxHeight: 30 }}>
                             {game.title}
                         </Typography>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", height: 30 }}>
-                                {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={30} height={30} style={{ borderRadius: 15 }} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={30} height={30} className={styles.thumbnailCircle30} alt={game.organizer.name} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
                                 {game.organizer.name}
                             </Typography>
                             <Typography component={"div"} style={{ color: darkerTextColor, height: 20, marginTop: 4, marginBottom: 4 }}>
@@ -96,6 +97,7 @@ export function GameCollectionNoWrap({ games, region }: GameHeaderCellProps) {
 }
 
 export function GameCollection({ games, region }: GameHeaderCellProps) {
+    const styles = useStyles()
     const [size, setSize] = useState(0)
 
     useEffect(() => {
@@ -112,7 +114,7 @@ export function GameCollection({ games, region }: GameHeaderCellProps) {
             if (game.passcode)
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
-                        <Image src={landscapeFieldImgURI} width={size} height={150} />
+                        <Image src={landscapeFieldImgURI} width={size} height={150} alt={game.title} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
                             <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 30 }}>
                                 {game.title}
@@ -121,7 +123,7 @@ export function GameCollection({ games, region }: GameHeaderCellProps) {
                         </div>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", height: 30 }}>
-                                {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={30} height={30} style={{ borderRadius: 15 }} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={30} height={30} className={styles.thumbnailCircle30} alt={game.organizer.name} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
                                 {game.organizer.name}
                             </Typography>
                             <div style={{ height: 20, marginTop: 4, marginBottom: 4 }} />
@@ -133,13 +135,13 @@ export function GameCollection({ games, region }: GameHeaderCellProps) {
             else
                 return <ImageListItem style={{ width: size, height: 300, backgroundColor: defaultTheme, borderColor: "black", borderWidth: 1, borderStyle: "solid" }} key={game.id}>
                     <Link href={"/" + region + "/game?id=" + game.id}>
-                        <Image src={landscapeFieldImgURI} width={size} height={150} />
+                        <Image src={landscapeFieldImgURI} width={size} height={150} alt={game.title} />
                         <Typography variant="h6" style={{ color: darkerTextColor, fontWeight: "bold", overflow: "hidden", maxHeight: 30 }}>
                             {game.title}
                         </Typography>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", height: 30 }}>
-                                {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={30} height={30} style={{ borderRadius: 15 }} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={30} height={30} className={styles.thumbnailCircle30} alt={game.organizer.name} /> : <AccountCircle style={{ width: 30, height: 30, borderRadius: 15 }} />}
                                 {game.organizer.name}
                             </Typography>
                             <Typography component={"div"} style={{ color: darkerTextColor, height: 20, marginTop: 4, marginBottom: 4 }}>

@@ -161,7 +161,7 @@ export function SigninDialog({ show, region, mode = "Sign in", signedIn, onClose
                                 <a href="forgot-password" style={{ color: 'aqua' }}>Forgot password</a>
                             </Typography>
                             <Typography align={"center"} style={{ color: 'white', marginTop: 16 }} >
-                                You can create an account if you don't have one<br />
+                                You can create an account if you don&apos;t have one<br />
                                 <Button variant="contained" onClick={() => switchSigninMode("Sign up")} color="primary" style={{ margin: 16 }}>
                                     Sign up
                                 </Button>
