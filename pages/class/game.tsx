@@ -15,7 +15,7 @@ import { backgroundTheme, borderColor, darkerTextColor, themeColor } from "../..
 import { supabase } from "../../SupabaseManager";
 import ParticipantsView from "../au/participants";
 import Header from "../Header";
-import PageBase, { BaseProps, BaseStates, styles } from "./PageBase";
+import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 
 interface Props extends BaseProps {
     metadata: GameMetaData | null

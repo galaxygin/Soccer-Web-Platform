@@ -6,15 +6,15 @@ import { User } from "@supabase/supabase-js";
 import { WithRouterProps } from "next/dist/client/with-router";
 import router from "next/router";
 import React from "react";
-import { addUserToDB, getUser, signOut } from "../../api/request/AuthRequest";
-import { getSimpleProfile, checkUserRegisteredAsPlayer } from "../../api/request/UserRequest";
-import { SigninDialog } from "../../components/SigninDialog";
-import { appName, regions } from "../../Definitions";
-import { backgroundTheme, darkerTextColor, defaultTheme, drawerWidth, goldColor } from "../../public/assets/styles/styles.web";
-import Header from "../Header";
+import { addUserToDB, getUser, signOut } from "../api/request/AuthRequest";
+import { getSimpleProfile, checkUserRegisteredAsPlayer } from "../api/request/UserRequest";
+import { SigninDialog } from "./SigninDialog";
+import { appName, regions } from "../Definitions";
+import { backgroundTheme, darkerTextColor, defaultTheme, drawerWidth, goldColor } from "../public/assets/styles/styles.web";
+import Header from "../pages/Header";
 import Cookies from "universal-cookie";
 import { isMobile } from "react-device-detect";
-import { ThumbnailUploader, HeaderUploader } from "../../components/ImageUploader";
+import { ThumbnailUploader, HeaderUploader } from "./ImageUploader";
 
 export interface BaseProps extends WithStyles<typeof styles>, WithRouterProps {
     region: string
