@@ -1,7 +1,7 @@
 import { withStyles } from "@material-ui/styles";
 import { withRouter } from "next/router";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
-import { landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
+import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
 import PageBase, { BaseProps, BaseStates, styles } from "./PageBase";
 import Header from "../Header"
 import React from "react";
@@ -13,6 +13,8 @@ import { ThumbnailUploader, HeaderUploader } from "../../components/ImageUploade
 
 interface Props extends BaseProps {
     metadata: PlayerMetaData
+    url: string
+    site_name: string
 }
 
 interface States extends BaseStates {
@@ -79,7 +81,9 @@ class PlayerView extends PageBase<Props, States> {
     }
 
     renderHeader() {
-        return <Header title={(this.props.metadata) ? this.props.metadata.name : "Private or couldn't get title"} description={(this.props.metadata && this.props.metadata.is_private) ? "Private or couldn't get description" : this.props.metadata.bio} thumbnail_url={(this.props.metadata.thumbnail_url) ? this.props.metadata.thumbnail_url : ""} url={""} />
+        if (this.props.metadata)
+            return <Header title={this.props.metadata.name} description={(this.props.metadata.is_private) ? "[Private] This player is private account" : this.props.metadata.bio} thumbnail_url={this.props.metadata.thumbnail_url} url={baseUrl + this.props.url} site_name={this.props.site_name} />
+        return <Header title={"Couldn't get title"} description={"Couldn't get description"} url={baseUrl + this.props.url} site_name={this.props.site_name} />
     }
 
     renderContent() {
@@ -241,9 +245,9 @@ export async function getServerSideProps(context: any) {
         await getPlayerMetaData(uid).then(metadata => {
             data = metadata
         }).catch(error => console.log(error.message))
-        return { props: { metadata: data } }
+        return { props: { metadata: data, url: context["resolvedUrl"], site_name: context["req"].headers.host } }
     } else {
-        return { props: { metadata: null } }
+        return { props: { metadata: null, url: context["resolvedUrl"], site_name: context["req"].headers.host } }
     }
 }
 

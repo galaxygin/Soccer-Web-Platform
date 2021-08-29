@@ -10,7 +10,7 @@ import { cancelRSVP, checkIsAlreadyJoining, deleteChatMessage, getChatMessages, 
 import { getSimpleProfile } from "../../api/request/UserRequest";
 import { removeSecondsFromTime, formatDateToString, formatTimeToString } from "../../components/DateManager";
 import OrganizeForm from "../../components/OrganizeForm";
-import { Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from "../../Definitions";
+import { baseUrl, Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from "../../Definitions";
 import { backgroundTheme, borderColor, darkerTextColor, themeColor } from "../../public/assets/styles/styles.web";
 import { supabase } from "../../SupabaseManager";
 import ParticipantsView from "../au/participants";
@@ -19,6 +19,8 @@ import PageBase, { BaseProps, BaseStates, styles } from "./PageBase";
 
 interface Props extends BaseProps {
     metadata: GameMetaData | null
+    url: string
+    site_name: string
 }
 
 interface States extends BaseStates {
@@ -109,9 +111,7 @@ class GameView extends PageBase<Props, States> {
 
     reloadDetails() {
         this.setState({ loading: true })
-        getGame(this.props.metadata!.id).then(game => {
-            this.setState({ game: game })
-        }).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loading: false }))
+        getGame(this.props.metadata!.id).then(game => this.setState({ game: game })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loading: false }))
     }
 
     loadChat() {
@@ -131,9 +131,7 @@ class GameView extends PageBase<Props, States> {
             return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
                 <Button style={{ backgroundColor: "white", color: "red", width: "80%", borderColor: "red", borderWidth: 1, borderStyle: "solid" }} onClick={() => {
                     this.setState({ joinLoading: true })
-                    cancelRSVP(this.state.game!.id, this.state.user!.id).then(() => {
-                        this.setState({ joinLoading: false, isJoining: false })
-                    })
+                    cancelRSVP(this.state.game!.id, this.state.user!.id).then(() => this.setState({ isJoining: false })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ joinLoading: false }))
                 }}>
                     Cancel commission
                 </Button>
@@ -156,7 +154,9 @@ class GameView extends PageBase<Props, States> {
     }
 
     renderHeader() {
-        return <Header title={(this.props.metadata?.title) ? this.props.metadata.title : "Private or couldn't get title"} description={(this.props.metadata) ? this.props.metadata.description : "Private or couldn't get description"} thumbnail_url={""} url={""} />
+        if (this.props.metadata)
+            return <Header title={this.props.metadata.title} description={this.props.metadata.description} thumbnail_url={""} url={baseUrl + this.props.url} site_name={this.props.site_name} />
+        return <Header title={"Couldn't get title"} description={"Couldn't get description"} thumbnail_url={""} url={baseUrl + this.props.url} site_name={this.props.site_name} />
     }
 
     renderContent() {
@@ -210,12 +210,12 @@ class GameView extends PageBase<Props, States> {
                     </Dialog>
                     <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
                         <Image src={landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} />
-                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
-                            <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8 }}>
+                            <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 48 }}>
                                 {this.state.game.title}
                             </Typography>
-                            {(this.state.game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
-                            {(this.state.game.organizer.uid == this.state.user?.id && this.state.game.status != "cancelled" && new Date() < new Date(this.state.game?.date + "T" + this.state.game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => this.setState({ showEditDialog: true })}>
+                            {(this.state.game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36, marginRight: 8 }} /> : null}
+                            {(this.state.game.organizer.uid == this.state.user?.id && this.state.game.status != "cancelled" && new Date() < new Date(this.state.game?.date + "T" + this.state.game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, marginRight: 16 }} onClick={() => this.setState({ showEditDialog: true })}>
                                 <Edit style={{ color: "white" }} />
                             </IconButton> : null}
                         </div>
@@ -338,9 +338,9 @@ export async function getServerSideProps(context: any) {
         await getGameMetaData(id).then(metadata => {
             data = metadata
         }).catch(error => console.log(error.message))
-        return { props: { metadata: data } }
+        return { props: { metadata: data, url: context["resolvedUrl"], site_name: context["req"].headers.host } }
     } else {
-        return { props: { metadata: null } }
+        return { props: { metadata: null, url: context["resolvedUrl"], site_name: context["req"].headers.host } }
     }
 }
 

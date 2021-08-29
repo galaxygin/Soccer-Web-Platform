@@ -36,7 +36,7 @@ export async function getGamesOfTheWeek(): Promise<GameHeader[]> {
     return games
 }
 
-export async function searchGames(title: string, location?: string, level: number = 0, date: Date = new Date(), time?: string): Promise<GameHeader[]> {
+export async function searchGames(title: string, level: number, date: Date, location?: string, time?: string): Promise<GameHeader[]> {
     const db = supabase.from("test_games").select("id, organizer: organizer(uid, name, thumbnail_url, is_private), title, location, date, time, player_level, participants, passcode, status").filter("title", "ilike", "%" + title + "%")
     db.filter("player_level", "eq", level).filter("date", "gte", formatDateToString(date))
     if (location)

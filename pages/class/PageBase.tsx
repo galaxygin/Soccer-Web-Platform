@@ -83,7 +83,7 @@ export default abstract class PageBase<Props extends BaseProps, State extends Ba
             changingRegion: false,
             snackSuccessMsg: "",
             snackErrorMsg: "",
-            anchorEl: null,
+            anchorEl: null
         })
         console.log(getUser())
         if (getUser()) {
@@ -375,7 +375,7 @@ export default abstract class PageBase<Props extends BaseProps, State extends Ba
                     <div style={{ display: "flex", flexDirection: "column", width: "100%", height: this.state.height, overflow: "hidden" }}>
                         <main style={{ backgroundColor: defaultTheme, width: "100%", overflow: "scroll" }}>
                             <div className={this.styles.drawerHeader} />
-                            <SigninDialog show={this.state.showSigninDialog!} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
+                            <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
                                 this.setState({ showSigninDialog: false })
                             }} onClose={() => {
                                 this.setState({ showSigninDialog: false })
@@ -432,14 +432,14 @@ export default abstract class PageBase<Props extends BaseProps, State extends Ba
                     </AppBar>
                     <main style={{ width: this.state.width, display: 'flex', flexDirection: 'column' }}>
                         <div className={this.styles.drawerHeader} />
-                        <SigninDialog show={this.state.showSigninDialog!} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
+                        <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
                             this.setState({ showSigninDialog: false })
                         }} onClose={() => {
                             this.setState({ showSigninDialog: false })
                         }} />
                         <div style={{ display: "flex" }}>
                             {this.renderDesktopNavMenu()}
-                            <div style={{ width: "50%", height: this.state.height! - 70, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme, overflow: "scroll" }}>
+                            <div style={{ width: "50%", height: (this.state.height) ? this.state.height! - 70 : 0, borderColor: defaultTheme, borderWidth: 1, borderStyle: "solid", background: defaultTheme, overflow: "scroll" }}>
                                 {this.renderContent()}
                             </div>
                             <div style={{ width: "25%", display: 'flex', flexDirection: 'column', overflow: "scroll" }}>

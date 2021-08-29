@@ -66,7 +66,7 @@ class GamesView extends PageBase<BaseProps, States> {
         if (this.state.searching)
             return
         this.setState({ searching: true })
-        searchGames(this.state.searchText, this.state.location, this.state.level, this.state.date, this.state.time).then(games => this.setState({ searchResult: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ searching: false }))
+        searchGames(this.state.searchText, this.state.level, this.state.date, this.state.location, this.state.time).then(games => this.setState({ searchResult: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ searching: false }))
     }
 
     renderTodaysGames() {
@@ -109,7 +109,7 @@ class GamesView extends PageBase<BaseProps, States> {
             }}>
                 <Close />
             </IconButton>
-            <TextField label="Location" variant="outlined" onChange={e => this.setState({ location: e.target.value }, () => this.fetchSearchGames())} value={location} />
+            <TextField label="Location" variant="outlined" onChange={e => this.setState({ location: e.target.value }, () => this.fetchSearchGames())} value={this.state.location} />
             <TextField label="Player level" variant="outlined" onChange={e => this.setState({ level: parseInt(e.target.value) }, () => this.fetchSearchGames())} value={this.state.level} select style={{ marginLeft: 8 }}>
                 <MenuItem key={0} value={0}>Anyone</MenuItem>
                 <MenuItem key={1} value={1}>Mid level</MenuItem>
@@ -150,7 +150,7 @@ class GamesView extends PageBase<BaseProps, States> {
                         this.setState({ openingSearch: false, searchText: "" })
                     }}><ChevronLeft /></IconButton> : null}
                     <TextField label="Search games..." variant="outlined" className={this.styles.formTextField} onChange={e => {
-                        this.setState({ openingSearch: true, searchText: e.target.value })
+                        this.setState({ openingSearch: true, searchText: e.target.value }, () => this.fetchSearchGames())
                     }} value={this.state.searchText} style={{ margin: 32, marginLeft: (this.state.openingSearch) ? 16 : 32 }} fullWidth />
                 </div>
                 {(this.state.openingSearch) ? this.renderSearchResult() : <>
