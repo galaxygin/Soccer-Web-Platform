@@ -163,6 +163,15 @@ export const useStyles = makeStyles((theme) => ({
         backgroundColor: "white",
         color: darkerTextColor,
         marginTop: 16
+    },
+    thumbnailCircle48: {
+        borderRadius: 24
+    },
+    thumbnailCircle36: {
+        borderRadius: 18
+    },
+    thumbnailCircle30: {
+        borderRadius: 15
     }
 }));
 

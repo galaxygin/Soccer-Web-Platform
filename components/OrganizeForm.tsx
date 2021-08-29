@@ -245,7 +245,7 @@ export default function OrganizeForm({ show, uid, region = "au", game_id, _title
                         <TextField label="Custom rules" variant="outlined" className={styles.formTextField} onChange={e => setCustomRules(e.target.value)} value={customRules} fullWidth multiline minRows={4} />
                         <TextField label="Requirements" variant="outlined" className={styles.formTextField} onChange={e => setRequirements(e.target.value)} value={requirements} fullWidth multiline minRows={4} />
                         {(editing) ? <>
-                            <Typography style={{ marginTop: 32 }}>Once the game is cancelled, it can't be undone</Typography>
+                            <Typography style={{ marginTop: 32 }}>Once the game is cancelled, it can&apos;t be undone</Typography>
                             <Button style={{ width: "100%", marginTop: 8, marginBottom: 32, backgroundColor: "red", color: "white" }} onClick={() => cancelGame(game_id!).then(() => onCancelled!())}>Cancel game</Button>
                         </> : null}
                     </DialogContent>
