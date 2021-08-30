@@ -7,9 +7,9 @@ import { isMobile } from 'react-device-detect'
 import { getGamesOfTheWeek, getMyGames } from '../../api/request/GameTestRequest'
 import { GameCollectionNoWrap } from '../../components/GameList'
 import OrganizeForm from '../../components/OrganizeForm'
+import { PageBaseFunction } from '../../components/PageBase'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
-import PageBase from '../PageBase'
 
 export default function HomeView() {
   const styles = useStyles()
@@ -97,7 +97,7 @@ export default function HomeView() {
     }
   }
 
-  return <PageBase content={content()} region={"jp"} onStateChanged={user => {
+  return <PageBaseFunction content={content()} region={"jp"} onStateChanged={user => {
     if (user) {
       fetchMyGames(user.id)
     }
