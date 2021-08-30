@@ -13,8 +13,8 @@ import OrganizeForm from "../../components/OrganizeForm";
 import { baseUrl, Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from "../../Definitions";
 import { backgroundTheme, borderColor, darkerTextColor, themeColor } from "../../public/assets/styles/styles.web";
 import { supabase } from "../../SupabaseManager";
-import ParticipantsView from "../au/participants";
-import Header from "../Header";
+import ParticipantsView from "../../components/ParticipantsView";
+import Header from "../../components/Header";
 import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 
 interface Props extends BaseProps {
@@ -168,7 +168,7 @@ class GameView extends PageBase<Props, States> {
                         <DialogContent>
                             Do you want to join this game?<br />
                             By joining this game, you must follow the rules and requirement of the game.<br />
-                            Also, if you do any of the following during the game, you'll get warning score that gives you step by step restrictions<br />
+                            Also, if you do any of the following during the game, you&apos;ll get warning score that gives you step by step restrictions<br />
                             ・No show<br />
                             ・Violence<br />
                             ・Harrassment<br />
@@ -206,10 +206,10 @@ class GameView extends PageBase<Props, States> {
                                 </Typography>
                             </Toolbar>
                         </AppBar>
-                        <ParticipantsView game_id={this.props.metadata!.id} />
+                        <ParticipantsView game_id={this.props.metadata!.id} region={this.state.region} uid={this.state.user?.id} />
                     </Dialog>
                     <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                        <Image src={landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} />
+                        <Image src={landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} alt={this.state.game.title} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8 }}>
                             <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden", maxHeight: 48 }}>
                                 {this.state.game.title}
@@ -221,7 +221,7 @@ class GameView extends PageBase<Props, States> {
                         </div>
                         <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/" + "class" + "/player", query: { uid: this.state.game!.organizer.uid } })}>
-                                {(this.state.game.organizer.thumbnail_url) ? <img src={this.state.game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                {(this.state.game.organizer.thumbnail_url) ? <Image src={this.state.game.organizer.thumbnail_url} width={48} height={48} className={this.styles.thumbnailCircle48} alt={this.state.game.organizer.name} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
                                     <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
                                         {this.state.game.organizer.name}
@@ -264,7 +264,7 @@ class GameView extends PageBase<Props, States> {
                             {this.state.messages.map(message => (
                                 <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
                                     <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
-                                        {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} onClick={() => router.push({ pathname: "/" + this.state.region + "/player", query: { uid: message.sender.uid } })} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                        {(message.sender.thumbnail_url) ? <Image src={message.sender.thumbnail_url} width={48} height={48} className={this.styles.thumbnailCircle48} alt={this.state.game?.organizer.name} onClick={() => router.push({ pathname: "/" + this.state.region + "/player", query: { uid: message.sender.uid } })} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                         <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
                                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
                                                 <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
@@ -316,7 +316,7 @@ class GameView extends PageBase<Props, States> {
                             </DialogActions>
                         </Dialog>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
-                            Couldn't get game details. Please try again
+                            Couldn&apos;t get game details. Please try again
                         </Typography>
                     </div >
                 )
@@ -325,7 +325,7 @@ class GameView extends PageBase<Props, States> {
 
     renderDetailView() {
         if (this.state.game && !isMobile)
-            return <ParticipantsView game_id={this.state.game.id} />
+            return <ParticipantsView game_id={this.props.metadata!.id} region={this.state.region} uid={this.state.user?.id} />
         else
             return <div />
     }

@@ -155,7 +155,7 @@ class GamesView extends PageBase<BaseProps, States> {
                 </div>
                 {(this.state.openingSearch) ? this.renderSearchResult() : <>
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        TODAY'S GAMES
+                        TODAY&apos;S GAMES
                     </Typography>
                     {(this.state.loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderTodaysGames()}
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>

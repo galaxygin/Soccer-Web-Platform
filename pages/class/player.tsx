@@ -3,13 +3,14 @@ import { withRouter } from "next/router";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
 import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
-import Header from "../Header"
+import Header from "../../components/Header"
 import React from "react";
 import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, TextField, Typography } from "@material-ui/core";
 import { Close, Edit, Done, AccountCircle, LockTwoTone } from "@material-ui/icons";
 import { darkerTextColor, defaultTheme } from "../../public/assets/styles/styles.web";
 import Image from "next/image";
 import { ThumbnailUploader, HeaderUploader } from "../../components/ImageUploader";
+import { isMobile } from "react-device-detect";
 
 interface Props extends BaseProps {
     metadata: PlayerMetaData
@@ -129,7 +130,7 @@ class PlayerView extends PageBase<Props, States> {
                                 <Button variant="outlined" onClick={() => this.setState({ changeHeader: false })}>Done</Button>
                             </DialogActions>
                         </Dialog>
-                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={this.state.width! * 0.5} height={300} onClick={e => {
+                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} alt={"player's header"} onClick={e => {
                             if (this.isMyAccount()) { this.setState({ headerAnchorEl: e.currentTarget }) }
                         }} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
@@ -160,7 +161,7 @@ class PlayerView extends PageBase<Props, States> {
                                         onClick={e => { if (this.isMyAccount()) this.setState({ thumbAnchorEl: e.currentTarget }) }}
                                         color="inherit"
                                     >
-                                        {(this.state.player.thumbnail_url) ? <img src={this.state.player.thumbnail_url} width={100} height={100} style={{ borderRadius: 50 }} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(this.state.player.thumbnail_url) ? <Image src={this.state.player.thumbnail_url} width={100} height={100} className={this.styles.thumbnailCircle100} alt={this.state.player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -187,7 +188,7 @@ class PlayerView extends PageBase<Props, States> {
             else
                 return (
                     <div style={{ display: "flex", flexDirection: "column", height: this.state.height! - 115 }}>
-                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={this.state.width! * 0.5} height={300} />
+                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} alt={"player's header"} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
                             <div style={{ display: "flex", paddingTop: 16, paddingLeft: 8, flexDirection: "column" }}>
                                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", height: 100 }}>
@@ -197,7 +198,7 @@ class PlayerView extends PageBase<Props, States> {
                                         onClick={e => { if (this.isMyAccount()) this.setState({ thumbAnchorEl: e.currentTarget }) }}
                                         color="inherit"
                                     >
-                                        {(this.state.player.thumbnail_url) ? <img src={this.state.player.thumbnail_url} width={100} height={100} style={{ borderRadius: 50 }} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(this.state.player.thumbnail_url) ? <Image src={this.state.player.thumbnail_url} width={100} height={100} className={this.styles.thumbnailCircle100} alt={this.state.player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -230,7 +231,7 @@ class PlayerView extends PageBase<Props, States> {
                 return (
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", paddingTop: 20 }}>
                         <Typography style={{ color: darkerTextColor }}>
-                            Couldn't get Player profile
+                            Couldn&apos;t get Player profile
                         </Typography>
                     </div >
                 )
