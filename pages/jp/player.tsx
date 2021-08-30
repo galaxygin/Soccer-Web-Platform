@@ -2,7 +2,7 @@ import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, Menu
 import React, { useState, useEffect, useCallback } from "react";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
-import PageBase from "../PageBase";
+import { PageBaseFunction } from "../../components/PageBase";
 import Image from 'next/image'
 import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
@@ -58,7 +58,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                 setLocalArea(player.local_area)
                 setThumbnailUrl(player.thumbnail_url)
                 setHeaderUrl(player.header_url)
-                setVisibility((player.is_private) ? "プライベート" : "パブリック")
+                setVisibility((player.is_private) ? "private" : "public")
             }
         }).catch(error => console.log(error.message)).finally(() => setLoading(false))
     }, [metadata])
@@ -253,7 +253,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
         }
     }
 
-    return <PageBase content={content()} header={<Header title={(metadata) ? metadata.name : "プレイヤー名の取得に失敗しました"} description={(metadata?.is_private) ? "非公開か、説明の取得に失敗しました" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} header={<Header title={(metadata) ? metadata.name : "プレイヤー名の取得に失敗しました"} description={(metadata?.is_private) ? "非公開か、説明の取得に失敗しました" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
         setUser(user)
     }} />
 }

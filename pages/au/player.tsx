@@ -2,7 +2,6 @@ import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, Menu
 import React, { useState, useEffect } from "react";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
-import PageBase from "../PageBase";
 import Image from 'next/image'
 import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
 import { useRouter } from "next/router";
@@ -13,6 +12,7 @@ import Header from "../../components/Header";
 import { HeaderUploader, ThumbnailUploader } from "../../components/ImageUploader";
 import { isMobile } from "react-device-detect";
 import { useCallback } from "react";
+import { PageBaseFunction } from "../../components/PageBase";
 
 interface props {
     metadata: PlayerMetaData | null
@@ -255,7 +255,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
         }
     }
 
-    return <PageBase content={content()} header={<Header title={(metadata) ? metadata.name : "Couldn't get player name"} description={(metadata?.is_private) ? "Private or couldn't get player bio" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} header={<Header title={(metadata) ? metadata.name : "Couldn't get player name"} description={(metadata?.is_private) ? "Private or couldn't get player bio" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
         setUser(user)
     }} />
 }

@@ -15,8 +15,8 @@ import { baseUrl, Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Mess
 import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../../public/assets/styles/styles.web'
 import { supabase } from '../../SupabaseManager'
 import Header from '../../components/Header'
-import PageBase from '../PageBase'
 import ParticipantsView from '../../components/ParticipantsView'
+import { PageBaseFunction } from '../../components/PageBase'
 
 const sample_game = {
     id: '1',
@@ -322,7 +322,7 @@ export default function GameView({ metadata, url, site_name }: props) {
         }
     }
 
-    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"au"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "Couldn't get title"} description={(metadata) ? metadata.description : "Couldn't get description"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"au"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "Couldn't get title"} description={(metadata) ? metadata.description : "Couldn't get description"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
         setUser(user)
         if (metadata) {
             if (user) {

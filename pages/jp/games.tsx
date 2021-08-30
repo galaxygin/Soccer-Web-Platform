@@ -9,9 +9,9 @@ import { isMobile } from 'react-device-detect'
 import { getTodaysGames, getGamesOfTheWeek, searchGames } from '../../api/request/GameTestRequest'
 import { GameCollection, GameCollectionNoWrap } from '../../components/GameList'
 import OrganizeForm from '../../components/OrganizeForm'
+import { PageBaseFunction } from '../../components/PageBase'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
-import PageBase from '../PageBase'
 
 export default function GamesView() {
     const styles = useStyles()
@@ -34,34 +34,27 @@ export default function GamesView() {
     const [postDialog, openPostDialog] = useState(false)
     const [showSnackbar, openSnackbar] = useState(false)
 
-    const fetchSearchGames = useCallback(() => {
-        if (searching)
-            return
-        setSearching(true)
-        searchGames(searchText, level, date, location, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
-    }, [searching, searchText, level, date, location, time])
-
     useEffect(() => {
         if (searchText)
             fetchSearchGames()
-    }, [searchText, fetchSearchGames])
+    }, [searchText])
 
     useEffect(() => {
         if (location)
             fetchSearchGames()
-    }, [location, fetchSearchGames])
+    }, [location])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [level, fetchSearchGames])
+    }, [level])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [date, fetchSearchGames])
+    }, [date])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [time, fetchSearchGames])
+    }, [time])
 
     function fetchTodaysGames() {
         setLoadingTodaysGames(true)
@@ -71,6 +64,13 @@ export default function GamesView() {
     function fetchWeekGames() {
         setLoadingGamesOfTheWeek(true)
         getGamesOfTheWeek().then(games => setGamesOfTheWeek(games)).catch(error => console.log(error.message)).finally(() => setLoadingGamesOfTheWeek(false))
+    }
+
+    function fetchSearchGames() {
+        if (searching)
+            return
+        setSearching(true)
+        searchGames(searchText, level, date, location, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
     }
 
     function renderTodaysGame() {
@@ -193,7 +193,7 @@ export default function GamesView() {
         )
     }
 
-    return <PageBase content={content()} region={"jp"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} region={"jp"} onStateChanged={user => {
         setUser(user)
         fetchTodaysGames()
         fetchWeekGames()

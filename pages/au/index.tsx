@@ -7,26 +7,10 @@ import { isMobile } from 'react-device-detect'
 import { getGamesOfTheWeek, getMyGames } from '../../api/request/GameTestRequest'
 import { GameCollectionNoWrap } from '../../components/GameList'
 import OrganizeForm from '../../components/OrganizeForm'
+import { PageBaseFunction } from '../../components/PageBase'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
-import PageBase from '../PageBase'
 
-const games = [{
-  id: '1',
-  organizer: "Perra",
-  title: "Test",
-  description: "Setumei",
-  location: "Sydney",
-  date: new Date(),
-  time: new Date(),
-  player_level: 0,
-  passcode: null,
-  max_players: null,
-  min_players: null,
-  custom_rules: "No hands",
-  requirements: null,
-  participants: 1
-}]
 
 export default function HomeView() {
   const styles = useStyles()
@@ -116,7 +100,7 @@ export default function HomeView() {
     }
   }
 
-  return <PageBase content={content()} region={"au"} onStateChanged={user => {
+  return <PageBaseFunction content={content()} region={"au"} onStateChanged={user => {
     if (user) {
       fetchMyGames(user.id)
     }

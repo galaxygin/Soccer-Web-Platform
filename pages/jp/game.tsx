@@ -15,8 +15,8 @@ import { baseUrl, Game, GameMetaData, getPlayerLevelJP, landscapeFieldImgURI, Me
 import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../../public/assets/styles/styles.web'
 import { supabase } from '../../SupabaseManager'
 import Header from '../../components/Header'
-import PageBase from '../PageBase'
 import ParticipantsView from '../../components/ParticipantsView'
+import { PageBaseFunction } from '../../components/PageBase'
 
 const sample_game = {
     id: '1',
@@ -322,7 +322,7 @@ export default function GameView({ metadata, url, site_name }: props) {
         }
     }
 
-    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"jp"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "非公開ゲームか、タイトルの取得に失敗しました"} description={(metadata) ? metadata.description : "非公開ゲームか、説明の取得に失敗しました"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"jp"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "非公開ゲームか、タイトルの取得に失敗しました"} description={(metadata) ? metadata.description : "非公開ゲームか、説明の取得に失敗しました"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
         setUser(user)
         if (metadata) {
             if (user) {
