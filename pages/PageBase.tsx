@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router'
 import { Link, MenuItem, IconButton, Menu, AppBar, Toolbar, Typography, BottomNavigation, BottomNavigationAction, Dialog, Button, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, CircularProgress } from '@material-ui/core';
 import { AccountCircle, EmojiEventsTwoTone, Home, Search, SportsSoccerTwoTone } from '@material-ui/icons';
-import Header from './Header';
+import Header from '../components/Header';
 import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, goldColor, useStyles } from '../public/assets/styles/styles.web';
 import { appName, regions } from '../Definitions';
 import { isMobile } from 'react-device-detect'
 import { addUserToDB, getUser, signOut } from '../api/request/AuthRequest';
 import { checkUserRegisteredAsPlayer, getSimpleProfile } from '../api/request/UserRequest';
 import { Alert } from '@material-ui/lab';
-import { useCookies } from 'react-cookie';
 import { SigninDialog } from '../components/SigninDialog';
 import { User } from "@supabase/supabase-js"
 import { ThumbnailUploader, HeaderUploader } from '../components/ImageUploader';
+import Image from 'next/image';
+import Cookies from 'universal-cookie';
+import { useCallback } from 'react';
 
 interface props {
     content: JSX.Element,
@@ -24,6 +26,8 @@ interface props {
     region?: string
 }
 
+const cookies = new Cookies()
+
 export default function PageBase({ content, detailView, wannaShowSigninDialog = false, onStateChanged = () => { }, closingSigninDialog = () => { }, header = <Header />, region = "au" }: props) {
     const styles = useStyles()
     const drawerStyle = drawerStyles()
@@ -31,7 +35,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
-    const [setupCookie, setSetupCookie, removeSetupCookie] = useCookies(['user_setup_finished'])
+    const [user, setUser] = useState<User | null>()
 
     const [showSetupDialog, openSetupDialog] = useState(false)
     const [name, setName] = useState("")
@@ -54,24 +58,27 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
     useEffect(() => {
         setWidth(window.innerWidth)
         setHeight(window.innerHeight)
+        setUser(getUser())
     }, [])
 
     useEffect(() => {
-        console.log(getUser())
-        if (getUser()) {
-            if (setupCookie.user_setup_finished)
-                getSimpleProfile(getUser()!.id).then(player => {
+        if (user == undefined)
+            return
+        console.log(user)
+        if (user) {
+            if (cookies.get("user_setup_finished"))
+                getSimpleProfile(user.id).then(player => {
                     if (player)
                         setThumbnailUrl(player.thumbnail_url)
-                }).catch(error => console.log(error.message)).finally(() => onStateChanged(getUser()))
+                }).catch(error => console.log(error.message))
             else
-                checkUserRegisteredAsPlayer(getUser()!.id).then(result => {
+                checkUserRegisteredAsPlayer(user.id).then(result => {
                     if (result) {
-                        setSetupCookie('user_setup_finished', true)
-                        getSimpleProfile(getUser()!.id).then(player => {
+                        cookies.set("user_setup_finished", true)
+                        getSimpleProfile(user.id).then(player => {
                             if (player)
                                 setThumbnailUrl(player.thumbnail_url)
-                        }).catch(error => console.log(error.message)).finally(() => onStateChanged(getUser()))
+                        }).catch(error => console.log(error.message))
                     } else {
                         openSetupDialog(true)
                     }
@@ -79,9 +86,9 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                     setSnackErrorMsg(error.message)
                     openSnackbar(true)
                 })
-        } else
-            onStateChanged(null)
-    }, [getUser()])
+        }
+        onStateChanged(user)
+    }, [user])
 
     const menuId = 'primary-search-account-menu';
     const handleMenuClose = () => {
@@ -107,7 +114,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                     <MenuItem onClick={() => {
                         handleMenuClose()
                         signOut().then(() => {
-                            removeSetupCookie("user_setup_finished")
+                            cookies.remove("user_setup_finished")
                             window.location.href = "/" + region
                         })
                     }}>Sign out</MenuItem>
@@ -184,7 +191,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                 }
                                 addUserToDB(getUser()!.id, name, bio, localArea, position).then(() => {
                                     openSetupDialog(false)
-                                    setSetupCookie('user_setup_finished', true)
+                                    cookies.set("user_setup_finished", true)
                                     onStateChanged(getUser())
                                 }).catch(error => setSetupErrorMsg(error.message))
                             }}>完了</Button>
@@ -232,7 +239,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                                 }
                                 addUserToDB(getUser()!.id, name, bio, localArea, position).then(() => {
                                     openSetupDialog(false)
-                                    setSetupCookie('user_setup_finished', true)
+                                    cookies.set("user_setup_finished", true)
                                     onStateChanged(getUser())
                                 }).catch(error => setSetupErrorMsg(error.message))
                             }}>Done</Button>
@@ -309,7 +316,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                             onClick={e => setAnchorEl(e.currentTarget)}
                             color="inherit"
                         >
-                            {(thumbnail_url) ? <img src={thumbnail_url} width={36} height={36} style={{ borderRadius: 18 }} /> : <AccountCircle style={{ width: 36, height: 36, borderRadius: 12 }} />}
+                            {(thumbnail_url) ? <Image src={thumbnail_url} width={36} height={36} className={styles.thumbnailCircle36} alt={"account thumbnail"} /> : <AccountCircle style={{ width: 36, height: 36, borderRadius: 12 }} />}
                         </IconButton>
                     </Toolbar>
                 </AppBar>
@@ -366,7 +373,7 @@ export default function PageBase({ content, detailView, wannaShowSigninDialog = 
                             onClick={e => setAnchorEl(e.currentTarget)}
                             color="inherit"
                         >
-                            {(thumbnail_url) ? <img src={thumbnail_url} width={36} height={36} style={{ borderRadius: 18 }} /> : <AccountCircle style={{ width: 36, height: 36, borderRadius: 12 }} />}
+                            {(thumbnail_url) ? <Image src={thumbnail_url} width={36} height={36} className={styles.thumbnailCircle36} alt={"account thumbnail"} /> : <AccountCircle style={{ width: 36, height: 36, borderRadius: 12 }} />}
                         </IconButton>
                     </Toolbar>
                 </AppBar>

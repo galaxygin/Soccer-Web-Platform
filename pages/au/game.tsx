@@ -14,9 +14,9 @@ import OrganizeForm from '../../components/OrganizeForm'
 import { baseUrl, Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from '../../Definitions'
 import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../../public/assets/styles/styles.web'
 import { supabase } from '../../SupabaseManager'
-import Header from '../Header'
+import Header from '../../components/Header'
 import PageBase from '../PageBase'
-import ParticipantsView from './participants'
+import ParticipantsView from '../../components/ParticipantsView'
 
 const sample_game = {
     id: '1',
@@ -90,7 +90,7 @@ export default function GameView({ metadata, url, site_name }: props) {
             if (chatSubscription)
                 chatSubscription.unsubscribe()
         }
-    }, [])
+    }, [metadata])
 
     function reloadDetails() {
         setLoading(true)
@@ -150,12 +150,13 @@ export default function GameView({ metadata, url, site_name }: props) {
                         <DialogContent>
                             Do you want to join this game?<br />
                             By joining this game, you must follow the rules and requirement of the game.<br />
-                            Also, if you do any of the following during the game, you'll get warning score that gives you step by step restrictions<br />
+                            Also, if you do any of the following during the game, you&apos;ll get warning score that gives you step by step restrictions<br />
                             ・No show<br />
                             ・Violence<br />
                             ・Harrassment<br />
                             ・Racism<br />
                             ・Breaching the rules<br />
+                            ・Any other things that the organizer treated as it shouldn&apos;t be tolerated<br />
                             {(joinError) ? <Alert severity="error">{joinError}</Alert> : null}<br />
                         </DialogContent>
                         <DialogActions>
@@ -192,10 +193,10 @@ export default function GameView({ metadata, url, site_name }: props) {
                                 </Typography>
                             </Toolbar>
                         </AppBar>
-                        <ParticipantsView game_id={metadata!.id} />
+                        <ParticipantsView game_id={metadata!.id} region={"au"} uid={user?.id} />
                     </Dialog>
                     <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                        <Image src={landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} />
+                        <Image src={landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={game.title} />
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
                             <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
                                 {game.title}
@@ -206,8 +207,8 @@ export default function GameView({ metadata, url, site_name }: props) {
                             </IconButton> : null}
                         </div>
                         <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/au/player", query: { uid: game.organizer.uid } })}>
-                                {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/" + "au" + "/player", query: { uid: game.organizer.uid } })}>
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={48} height={48} className={styles.thumbnailCircle48} alt={game.organizer.name} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
                                     <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
                                         {game.organizer.name}
@@ -251,7 +252,7 @@ export default function GameView({ metadata, url, site_name }: props) {
                                 <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
                                     <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
                                         <div onClick={() => router.push({ pathname: "/" + "au" + "/player", query: { uid: message.sender.uid } })}>
-                                            {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                            {(message.sender.thumbnail_url) ? <Image src={message.sender.thumbnail_url} width={48} height={48} className={styles.thumbnailCircle48} alt={message.sender.name} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
                                             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
@@ -314,14 +315,14 @@ export default function GameView({ metadata, url, site_name }: props) {
                         </Dialog>
                         <Typography component={"div"} style={{ color: darkerTextColor }}>
                             {(errorMsg) ? <Alert severity="error">{errorMsg}</Alert> : null}<br />
-                            Couldn't get game details.
+                            Couldn&apos;t get game details.
                         </Typography>
                     </div >
                 )
         }
     }
 
-    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "Couldn't get title"} description={(metadata) ? metadata.description : "Couldn't get description"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
+    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"au"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "Couldn't get title"} description={(metadata) ? metadata.description : "Couldn't get description"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
         setUser(user)
         if (metadata) {
             if (user) {

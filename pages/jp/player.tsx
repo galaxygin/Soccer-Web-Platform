@@ -1,5 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
 import PageBase from "../PageBase";
@@ -9,7 +9,7 @@ import { useRouter } from "next/router";
 import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { User } from "@supabase/supabase-js";
-import Header from "../Header";
+import Header from "../../components/Header";
 import { HeaderUploader, ThumbnailUploader } from "../../components/ImageUploader";
 import { isMobile } from "react-device-detect";
 
@@ -48,6 +48,21 @@ export default function PlayerView({ metadata, url, site_name }: props) {
     const [headerAnchorEl, setHeaderAnchorEl] = useState<HTMLElement | null>(null);
     const isHeaderMenuOpen = Boolean(headerAnchorEl);
 
+    const updateInfo = useCallback(() => {
+        getProfile(metadata!.uid).then(player => {
+            if (player) {
+                setPlayer(player)
+                setName(player.name)
+                setBio(player.bio)
+                setPosition(player.position)
+                setLocalArea(player.local_area)
+                setThumbnailUrl(player.thumbnail_url)
+                setHeaderUrl(player.header_url)
+                setVisibility((player.is_private) ? "プライベート" : "パブリック")
+            }
+        }).catch(error => console.log(error.message)).finally(() => setLoading(false))
+    }, [metadata])
+
     useEffect(() => {
         setWidth(window.innerWidth)
         setHeight(window.innerHeight)
@@ -59,22 +74,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
             return
         }
         setLoading(false)
-    }, [metadata])
-
-    function updateInfo() {
-        getProfile(metadata!.uid).then(player => {
-            if (player) {
-                setPlayer(player)
-                setName(player.name)
-                setBio(player.bio)
-                setPosition(player.position)
-                setLocalArea(player.local_area)
-                setThumbnailUrl(player.thumbnail_url)
-                setHeaderUrl(player.header_url)
-                setVisibility((player.is_private) ? "private" : "public")
-            }
-        }).catch(error => console.log(error.message)).finally(() => setLoading(false))
-    }
+    }, [metadata, updateInfo])
 
     function isMyAccount(): boolean {
         return metadata?.uid == user?.id
@@ -142,7 +142,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                                 <Button variant="outlined" onClick={() => changingHeader(false)}>完了</Button>
                             </DialogActions>
                         </Dialog>
-                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} onClick={e => {
+                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={"player's header"} onClick={e => {
                             if (isMyAccount()) { setHeaderAnchorEl(e.currentTarget) }
                         }} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
@@ -173,7 +173,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                                         onClick={e => { if (isMyAccount()) setAnchorEl(e.currentTarget) }}
                                         color="inherit"
                                     >
-                                        {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} style={{ borderRadius: 50 }} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(thumbnail_url) ? <Image src={thumbnail_url} width={100} height={100} className={styles.thumbnailCircle100} alt={player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
@@ -203,7 +203,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
             else
                 return (
                     <div style={{ display: "flex", flexDirection: "column", height: height - 115 }}>
-                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} />
+                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={"player's header"} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
                             <div style={{ display: "flex", paddingTop: 16, paddingLeft: 8, flexDirection: "column" }}>
                                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", height: 100 }}>
@@ -213,7 +213,7 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                                         color="inherit"
                                         disabled
                                     >
-                                        {(thumbnail_url) ? <img src={thumbnail_url} width={100} height={100} style={{ borderRadius: 50 }} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(thumbnail_url) ? <Image src={thumbnail_url} width={100} height={100} className={styles.thumbnailCircle100} alt={player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>

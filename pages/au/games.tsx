@@ -4,7 +4,7 @@ import { AddTwoTone, ChevronLeft, Close } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
 import { MuiPickersUtilsProvider, KeyboardDatePicker } from '@material-ui/pickers'
 import { User } from '@supabase/supabase-js'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { isMobile } from 'react-device-detect'
 import { getTodaysGames, getGamesOfTheWeek, searchGames } from '../../api/request/GameTestRequest'
 import { GameCollection, GameCollectionNoWrap } from '../../components/GameList'
@@ -51,27 +51,34 @@ export default function GamesView() {
     const [postDialog, openPostDialog] = useState(false)
     const [showSnackbar, openSnackbar] = useState(false)
 
+    const fetchSearchGames = useCallback(() => {
+        if (searching)
+            return
+        setSearching(true)
+        searchGames(searchText, level, date, location, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
+    }, [searching, searchText, level, date, location, time])
+
     useEffect(() => {
         if (searchText)
             fetchSearchGames()
-    }, [searchText])
+    }, [searchText, fetchSearchGames])
 
     useEffect(() => {
         if (location)
             fetchSearchGames()
-    }, [location])
+    }, [location, fetchSearchGames])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [level])
+    }, [level, fetchSearchGames])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [date])
+    }, [date, fetchSearchGames])
 
     useEffect(() => {
         fetchSearchGames()
-    }, [time])
+    }, [time, fetchSearchGames])
 
     function fetchTodaysGames() {
         setLoadingTodaysGames(true)
@@ -81,13 +88,6 @@ export default function GamesView() {
     function fetchWeekGames() {
         setLoadingGamesOfTheWeek(true)
         getGamesOfTheWeek().then(games => setGamesOfTheWeek(games)).catch(error => console.log(error.message)).finally(() => setLoadingGamesOfTheWeek(false))
-    }
-
-    function fetchSearchGames() {
-        if (searching)
-            return
-        setSearching(true)
-        searchGames(searchText, level, date, location, time).then(games => setSearchResult(games)).catch(error => { console.log(error.message) }).finally(() => setSearching(false))
     }
 
     function renderTodaysGame() {
@@ -183,7 +183,7 @@ export default function GamesView() {
                 </div>
                 {(openingSearch) ? renderSearchResult() : <>
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        TODAY'S GAMES
+                        TODAY&apos;S GAMES
                     </Typography>
                     {(loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderTodaysGame()}
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>

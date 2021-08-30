@@ -14,9 +14,9 @@ import OrganizeForm from '../../components/OrganizeForm'
 import { baseUrl, Game, GameMetaData, getPlayerLevelJP, landscapeFieldImgURI, Message } from '../../Definitions'
 import { backgroundTheme, borderColor, darkerTextColor, themeColor, useStyles } from '../../public/assets/styles/styles.web'
 import { supabase } from '../../SupabaseManager'
-import Header from '../Header'
+import Header from '../../components/Header'
 import PageBase from '../PageBase'
-import ParticipantsView from './participants'
+import ParticipantsView from '../../components/ParticipantsView'
 
 const sample_game = {
     id: '1',
@@ -90,7 +90,7 @@ export default function GameView({ metadata, url, site_name }: props) {
             if (chatSubscription)
                 chatSubscription.unsubscribe()
         }
-    }, [])
+    }, [metadata])
 
     function reloadDetails() {
         setLoading(true)
@@ -143,221 +143,142 @@ export default function GameView({ metadata, url, site_name }: props) {
 
     function content() {
         if (game) {
-            if (user)
-                return (
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                        {(user) ? <Dialog open={showJoinConfirmDialog} fullWidth>
-                            <DialogTitle>確認</DialogTitle>
-                            <DialogContent>
-                                このゲームに参加しますか?<br />
-                                このゲームに参加する事で、ゲームのルールと要件に同意した事になります。<br />
-                                また、参加中の以下の行為を行うと警告スコアが増加し段階的な規制が行われます。<br />
-                                ・姿を見せない<br />
-                                ・暴力<br />
-                                ・ハラスメント<br />
-                                ・差別<br />
-                                ・ルールに従わない<br />
-                                ・その他、主催者が問題と認識した行為<br />
-                                {(joinError) ? <Alert severity="error">{joinError}</Alert> : null}<br />
-                            </DialogContent>
-                            <DialogActions>
-                                <Button onClick={() => openJoinConfirmDialog(false)}>Go back</Button>
-                                <div style={{ flexGrow: 1 }} />
-                                {(joinLoading) ? <CircularProgress /> : <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
-                                    setJoinLoading(true)
-                                    joinAGame(game.id, user.id).then(() => {
-                                        setJoining(true)
-                                        openJoinConfirmDialog(false)
-                                        setSnackMsg("Joined the game successfully")
-                                        openSnackbar(true)
-                                    }).catch(error => setJoinError(error.message)).finally(() => setJoinLoading(false))
-                                }}>参加する</Button>}
-                            </DialogActions>
-                        </Dialog> : null}
-                        {(user) ? <OrganizeForm show={showEditDialog} uid={user.id} game_id={game.id} _title={game.title} _description={game.description} _location={game.location} _date={new Date(game.date)} _time={game.time.toString()} _playerLevel={game.player_level} _passcode={passcode} _maxPlayers={game.max_players} _minPlayers={game.min_players} _customRules={game.custom_rules} _requirements={game.requirements} editing posted={() => {
-                            openEditDialog(false)
-                            setSnackMsg("The game details updated successfully")
-                            reloadDetails()
-                            openSnackbar(true)
-                        }} onClose={() => openEditDialog(false)} onCancelled={() => {
-                            setGame(prevState => ({ ...prevState!, status: "cancelled" }))
-                            openEditDialog(false)
-                        }} /> : null}
-                        <Dialog open={showParticipants} onClick={() => openParticipants(false)} fullScreen>
-                            <AppBar style={{ position: "relative" }}>
-                                <Toolbar>
-                                    <IconButton edge="start" color="inherit" onClick={() => openParticipants(false)} aria-label="close">
-                                        <Close />
-                                    </IconButton>
-                                    <Typography variant="h6" style={{ flex: 1 }}>
-                                        参加者
-                                    </Typography>
-                                </Toolbar>
-                            </AppBar>
-                            <ParticipantsView game_id={metadata!.id} />
-                        </Dialog>
-                        <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                            <Image src={landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} />
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
-                                <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                                    {game.title}
-                                </Typography>
-                                {(game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
-                                {(game.organizer.uid == user.id && game.status != "cancelled" && new Date() < new Date(game?.date + "T" + game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => openEditDialog(true)}>
-                                    <Edit style={{ color: "white" }} />
-                                </IconButton> : null}
-                            </div>
-                            <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/jp/player", query: { uid: game.organizer.uid } })}>
-                                    {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
-                                        <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
-                                            {game.organizer.name}
-                                        </div>
-                                        主催者
-                                    </div>
-                                </div>
-                                {game.description}<br />
-                                場所: {game.location}<br />
-                                日時: {game.date + " " + removeSecondsFromTime(game.time)}<br />
-                                レベル: {getPlayerLevelJP(game.player_level)}<br />
-                                {(game.max_players) ? <>最大人数: {game.max_players}<br /></> : null}
-                                {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
-                                    <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => openParticipants(true)}>
-                                        参加者 ({game.participants})
-                                    </Button>
-                                </div> : null}
-                                {renderByStatus()}
-                            </Typography>
-                        </Typography>
-                        <div>
-                            <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                <TextField label="参加者にメッセージを送る" variant="outlined" className={styles.formTextField} onChange={e => setMessage(e.target.value)} value={message} fullWidth style={{ marginTop: 0 }} />
-                                {(sending) ? <CircularProgress /> : <IconButton onClick={() => {
-                                    if (user) {
-                                        if (message) {
-                                            setSending(true)
-                                            sendChatMessage(game.id, user.id, message).then(() => { setMessage(""); }).catch(error => console.log(error.message)).finally(() => setSending(false))
-                                        } else {
-                                            setSnackErrorMsg("メッセージが空です")
-                                        }
-                                    } else {
-                                        openSigninDialog(true)
-                                    }
-                                }}>
-                                    <SendTwoTone style={{ color: themeColor }} />
-                                </IconButton>}
-                            </div>
-                            <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
-                                {messages.map(message => (
-                                    <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
-                                        <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
-                                            <div onClick={() => router.push({ pathname: "/" + "jp" + "/player", query: { uid: message.sender.uid } })}>
-                                                {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                            </div>
-                                            <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
-                                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
-                                                    <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
-                                                        {message.sender.name}
-                                                    </Typography>
-                                                    {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
-                                                    {(message.sender.uid == user.id) ? <IconButton onClick={() => deleteChatMessage(message.id)}>
-                                                        <DeleteTwoTone />
-                                                    </IconButton> : null}
-                                                </div>
-                                                {message.content}
-                                            </div>
-                                        </Typography>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </div>
-                        <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-                            <Alert onClose={() => openSnackbar(false)} severity="success">{snackMsg}</Alert>
-                        </Snackbar>
-                        <Snackbar open={(snackErrorMsg) ? true : false} autoHideDuration={6000} onClose={() => setSnackErrorMsg("")}>
-                            <Alert onClose={() => setSnackErrorMsg("")} severity="success">{snackErrorMsg}</Alert>
-                        </Snackbar>
-                    </div >
-                )
-            else
-                return (
-                    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                        <Dialog open={showParticipants} onClick={() => openParticipants(false)} fullScreen>
-                            <AppBar style={{ position: "relative" }}>
-                                <Toolbar>
-                                    <IconButton edge="start" color="inherit" onClick={() => openEditDialog(false)} aria-label="close">
-                                        <Close />
-                                    </IconButton>
-                                    <Typography variant="h6" style={{ flex: 1 }}>
-                                        参加者
-                                    </Typography>
-                                </Toolbar>
-                            </AppBar>
-                            <ParticipantsView game_id={metadata!.id} />
-                        </Dialog>
-                        <Image src={landscapeFieldImgURI} width={width * 0.5} height={300} />
-                        <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
-                                <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
-                                    {game.title}
-                                </Typography>
-                                {(game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
-                            </div>
-                            <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
-                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/jp/player", query: { uid: game.organizer.uid } })}>
-                                    {(game.organizer.thumbnail_url) ? <img src={game.organizer.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
-                                        <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
-                                            {game.organizer.name}
-                                        </div>
-                                        主催者
-                                    </div>
-                                </div>
-                                {game.description}<br />
-                                場所: {game.location}<br />
-                                日時: {game.date + " " + removeSecondsFromTime(game.time)}<br />
-                                レベル: {getPlayerLevelJP(game.player_level)}<br />
-                                {(game.max_players) ? <>最大人数: {game.max_players}<br /></> : null}
-                                {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
-                                    <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => openParticipants(true)}>
-                                        参加者 ({game.participants})
-                                    </Button>
-                                </div> : null}
-                                {renderByStatus()}
-                            </Typography>
-                        </Typography>
-                        <div>
-                            <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                <TextField disabled label="参加者にメッセージを送る" variant="outlined" className={styles.formTextField} onChange={e => setMessage(e.target.value)} value={message} fullWidth style={{ marginTop: 0 }} />
-                                <IconButton disabled >
-                                    <SendTwoTone style={{ color: themeColor }} />
+            return (
+                <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                    {(user) ? <Dialog open={showJoinConfirmDialog} fullWidth>
+                        <DialogTitle>確認</DialogTitle>
+                        <DialogContent>
+                            このゲームに参加しますか?<br />
+                            このゲームに参加する事で、ゲームのルールと要件に同意した事になります。<br />
+                            また、参加中の以下の行為を行うと警告スコアが増加し段階的な規制が行われます。<br />
+                            ・姿を見せない<br />
+                            ・暴力<br />
+                            ・ハラスメント<br />
+                            ・差別<br />
+                            ・ルールに従わない<br />
+                            ・その他、主催者が問題と認識した行為<br />
+                            {(joinError) ? <Alert severity="error">{joinError}</Alert> : null}<br />
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => openJoinConfirmDialog(false)}>Go back</Button>
+                            <div style={{ flexGrow: 1 }} />
+                            {(joinLoading) ? <CircularProgress /> : <Button style={{ backgroundColor: "red", color: "white" }} onClick={() => {
+                                setJoinLoading(true)
+                                joinAGame(game.id, user.id).then(() => {
+                                    setJoining(true)
+                                    openJoinConfirmDialog(false)
+                                    setSnackMsg("Joined the game successfully")
+                                    openSnackbar(true)
+                                }).catch(error => setJoinError(error.message)).finally(() => setJoinLoading(false))
+                            }}>参加する</Button>}
+                        </DialogActions>
+                    </Dialog> : null}
+                    {(user) ? <OrganizeForm show={showEditDialog} uid={user.id} game_id={game.id} _title={game.title} _description={game.description} _location={game.location} _date={new Date(game.date)} _time={game.time.toString()} _playerLevel={game.player_level} _passcode={passcode} _maxPlayers={game.max_players} _minPlayers={game.min_players} _customRules={game.custom_rules} _requirements={game.requirements} editing posted={() => {
+                        openEditDialog(false)
+                        setSnackMsg("The game details updated successfully")
+                        reloadDetails()
+                        openSnackbar(true)
+                    }} onClose={() => openEditDialog(false)} onCancelled={() => {
+                        setGame(prevState => ({ ...prevState!, status: "cancelled" }))
+                        openEditDialog(false)
+                    }} /> : null}
+                    <Dialog open={showParticipants} onClick={() => openParticipants(false)} fullScreen>
+                        <AppBar style={{ position: "relative" }}>
+                            <Toolbar>
+                                <IconButton edge="start" color="inherit" onClick={() => openParticipants(false)} aria-label="close">
+                                    <Close />
                                 </IconButton>
-                            </div>
-                            <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
-                                {messages.map(message => (
-                                    <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
-                                        <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
-                                            {(message.sender.thumbnail_url) ? <img src={message.sender.thumbnail_url} width={48} height={48} style={{ borderRadius: 24 }} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
-                                            <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
-                                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
-                                                    <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
-                                                        {message.sender.name}
-                                                    </Typography>
-                                                    {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
-                                                </div>
-                                                {message.content}
-                                            </div>
-                                        </Typography>
-                                    </ListItem>
-                                ))}
-                            </List>
+                                <Typography variant="h6" style={{ flex: 1 }}>
+                                    参加者
+                                </Typography>
+                            </Toolbar>
+                        </AppBar>
+                        <ParticipantsView game_id={metadata!.id} region={"jp"} uid={user?.id} />
+                    </Dialog>
+                    <Typography component={"div"} style={{ backgroundColor: "#FFFFFF", borderColor: borderColor, borderWidth: 1, borderStyle: "solid" }}>
+                        <Image src={landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={game.title} />
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap", paddingLeft: 8, paddingTop: 8 }}>
+                            <Typography variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", flex: 1, overflow: "hidden" }}>
+                                {game.title}
+                            </Typography>
+                            {(game.passcode) ? <LockTwoTone style={{ color: "gray", width: 36, height: 36 }} /> : null}
+                            {(game.organizer.uid == user?.id && game.status != "cancelled" && new Date() < new Date(game?.date + "T" + game?.time)) ? <IconButton style={{ backgroundColor: backgroundTheme, width: 48, height: 48, marginRight: 16 }} onClick={() => openEditDialog(true)}>
+                                <Edit style={{ color: "white" }} />
+                            </IconButton> : null}
                         </div>
-                        <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-                            <Alert onClose={() => openSnackbar(false)} severity="success">{snackMsg}</Alert>
-                        </Snackbar>
-                    </div >
-                )
+                        <Typography component={"div"} style={{ padding: 8, marginTop: 8 }}>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: 16 }} onClick={() => router.push({ pathname: "/" + "jp" + "/player", query: { uid: game.organizer.uid } })}>
+                                {(game.organizer.thumbnail_url) ? <Image src={game.organizer.thumbnail_url} width={48} height={48} className={styles.thumbnailCircle48} alt={game.organizer.name} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", color: darkerTextColor, marginLeft: 8, height: 48 }}>
+                                    <div style={{ fontWeight: "bold", fontSize: 20, height: 30 }}>
+                                        {game.organizer.name}
+                                    </div>
+                                    主催者
+                                </div>
+                            </div>
+                            {game.description}<br />
+                            場所: {game.location}<br />
+                            日時: {game.date + " " + removeSecondsFromTime(game.time)}<br />
+                            レベル: {getPlayerLevelJP(game.player_level)}<br />
+                            {(game.max_players) ? <>最大人数: {game.max_players}<br /></> : null}
+                            {(isMobile) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 16 }}>
+                                <Button style={{ backgroundColor: "white", color: backgroundTheme, width: "80%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }} onClick={() => openParticipants(true)}>
+                                    参加者 ({game.participants})
+                                </Button>
+                            </div> : null}
+                            {renderByStatus()}
+                        </Typography>
+                    </Typography>
+                    <div>
+                        <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                            <TextField label="参加者にメッセージを送る" variant="outlined" className={styles.formTextField} onChange={e => setMessage(e.target.value)} value={message} fullWidth style={{ marginTop: 0 }} />
+                            {(sending) ? <CircularProgress /> : <IconButton onClick={() => {
+                                if (user) {
+                                    if (message) {
+                                        setSending(true)
+                                        sendChatMessage(game.id, user.id, message).then(() => { setMessage(""); }).catch(error => console.log(error.message)).finally(() => setSending(false))
+                                    } else {
+                                        setSnackErrorMsg("メッセージが空です")
+                                    }
+                                } else {
+                                    openSigninDialog(true)
+                                }
+                            }}>
+                                <SendTwoTone style={{ color: themeColor }} />
+                            </IconButton>}
+                        </div>
+                        <List style={{ backgroundColor: "whitesmoke", flexGrow: 1, maxHeight: 300, overflow: "scroll" }}>
+                            {messages.map(message => (
+                                <ListItem style={{ backgroundColor: "whitesmoke" }} key={message.id}>
+                                    <Typography component={"div"} style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%" }}>
+                                        <div onClick={() => router.push({ pathname: "/" + "jp" + "/player", query: { uid: message.sender.uid } })}>
+                                            {(message.sender.thumbnail_url) ? <Image src={message.sender.thumbnail_url} width={48} height={48} className={styles.thumbnailCircle48} alt={message.sender.name} /> : <AccountCircle style={{ width: 48, height: 48, borderRadius: 24 }} />}
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", color: darkerTextColor, marginLeft: 16, width: "100%" }}>
+                                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", maxHeight: 20 }}>
+                                                <Typography component={"div"} style={{ fontWeight: "bold", marginRight: 8, flex: 1 }}>
+                                                    {message.sender.name}
+                                                </Typography>
+                                                {formatDateToString(message.timestamp) + " " + formatTimeToString(message.timestamp)}
+                                                {(message.sender.uid == user?.id) ? <IconButton onClick={() => deleteChatMessage(message.id)}>
+                                                    <DeleteTwoTone />
+                                                </IconButton> : null}
+                                            </div>
+                                            {message.content}
+                                        </div>
+                                    </Typography>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </div>
+                    <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
+                        <Alert onClose={() => openSnackbar(false)} severity="success">{snackMsg}</Alert>
+                    </Snackbar>
+                    <Snackbar open={(snackErrorMsg) ? true : false} autoHideDuration={6000} onClose={() => setSnackErrorMsg("")}>
+                        <Alert onClose={() => setSnackErrorMsg("")} severity="success">{snackErrorMsg}</Alert>
+                    </Snackbar>
+                </div >
+            )
         } else {
             if (loading)
                 return <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -401,7 +322,7 @@ export default function GameView({ metadata, url, site_name }: props) {
         }
     }
 
-    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "非公開ゲームか、タイトルの取得に失敗しました"} description={(metadata) ? metadata.description : "非公開ゲームか、説明の取得に失敗しました"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
+    return <PageBase content={content()} detailView={(game && !isMobile) ? <ParticipantsView game_id={game.id} region={"jp"} uid={user?.id} /> : <div />} wannaShowSigninDialog={showSigninDialog} header={<Header title={(metadata) ? metadata.title : "非公開ゲームか、タイトルの取得に失敗しました"} description={(metadata) ? metadata.description : "非公開ゲームか、説明の取得に失敗しました"} thumbnail_url={""} url={baseUrl + url} site_name={site_name} />} region={"jp"} onStateChanged={user => {
         setUser(user)
         if (metadata) {
             if (user) {
