@@ -32,7 +32,7 @@ export function ThumbnailUploader({ uid, region = "au", imagePreviewWidth = 100,
 
     function renderPreview() {
         if (thumbnail_url) {
-            return <img src={thumbnail_url} width={imagePreviewWidth} height={imagePreviewHeight} alt={""} />
+            return <Image src={thumbnail_url} width={imagePreviewWidth} height={imagePreviewHeight} alt={"user thumbnail"} />
         } else {
             return <AccountCircle style={{ width: imagePreviewWidth, height: imagePreviewHeight }} />
         }
@@ -86,7 +86,7 @@ export function HeaderUploader({ uid, region = "au", imagePreviewWidth = 500, im
     const [errorHeaderMsg, setErrorHeaderMsg] = useState(null)
 
     function renderPreview() {
-        return <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={imagePreviewWidth * 0.5} height={imagePreviewHeight} />
+        return <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={imagePreviewWidth * 0.5} height={imagePreviewHeight} alt={"user header"} />
     }
 
     function upload() {

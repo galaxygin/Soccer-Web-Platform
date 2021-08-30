@@ -24,7 +24,7 @@ export default function HomeView() {
         router.push("/au")
         console.log("Couldn't check country:", data);
       });
-  }, [])
+  }, [router])
 
   return <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
     Checking Region<br />
