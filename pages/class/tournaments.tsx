@@ -5,7 +5,7 @@ import { MuiPickersUtilsProvider, KeyboardDatePicker } from "@material-ui/picker
 import { withRouter } from "next/router";
 import React from "react";
 import { isMobile } from "react-device-detect";
-import { getGamesOfTheWeek, getTodaysGames, searchGames } from "../../api/request/GameTestRequest";
+import { searchGames } from "../../api/request/GameTestRequest";
 import { GameCollection, GameCollectionNoWrap } from "../../components/GameList";
 import OrganizeForm from "../../components/OrganizeForm";
 import { GameHeader } from "../../Definitions";
@@ -13,10 +13,10 @@ import { darkerTextColor, backgroundTheme } from "../../public/assets/styles/sty
 import PageBaseClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 
 interface States extends BaseStates {
-    loadingTodaysGames: boolean
-    todaysGames: GameHeader[]
-    loadingGamesOfTheWeek: boolean
-    gamesOfTheWeek: GameHeader[]
+    loadingMyTournaments: boolean
+    myTournaments: GameHeader[]
+    loadingTournaments: boolean
+    tournaments: GameHeader[]
     openingSearch: boolean
     searchText: string
     location: string
@@ -28,14 +28,14 @@ interface States extends BaseStates {
     showPostDialog: boolean
 }
 
-class GamesView extends PageBaseClass<BaseProps, States> {
+class TournamentsView extends PageBaseClass<BaseProps, States> {
     state: States = {
         region: "class",
         selectedNavValue: "games",
-        loadingTodaysGames: true,
-        todaysGames: [],
-        loadingGamesOfTheWeek: true,
-        gamesOfTheWeek: [],
+        loadingMyTournaments: true,
+        myTournaments: [],
+        loadingTournaments: true,
+        tournaments: [],
         openingSearch: false,
         searchText: "",
         location: "",
@@ -48,18 +48,19 @@ class GamesView extends PageBaseClass<BaseProps, States> {
     }
 
     onBaseLoaded() {
-        this.fetchTodaysGames()
-        this.fetchGamesOfTheWeek()
+        if (this.state.user)
+            this.fetchMyTournaments()
+        this.fetchTournaments()
     }
 
-    fetchTodaysGames() {
-        this.setState({ loadingTodaysGames: true })
-        getTodaysGames().then(games => this.setState({ todaysGames: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingTodaysGames: false }))
+    fetchMyTournaments() {
+        // this.setState({ loadingMyTournaments: true })
+        // getMyTournaments().then(games => this.setState({ myTournaments: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingMyTournaments: false }))
     }
 
-    fetchGamesOfTheWeek() {
-        this.setState({ loadingGamesOfTheWeek: true })
-        getGamesOfTheWeek().then(games => this.setState({ gamesOfTheWeek: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
+    fetchTournaments() {
+        // this.setState({ loadingTournaments: true })
+        // getTournaments().then(games => this.setState({ tournaments: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingTournaments: false }))
     }
 
     fetchSearchGames() {
@@ -69,18 +70,18 @@ class GamesView extends PageBaseClass<BaseProps, States> {
         searchGames(this.state.searchText, this.state.level, this.state.date, this.state.location, this.state.time).then(games => this.setState({ searchResult: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ searching: false }))
     }
 
-    renderTodaysGames() {
-        if (this.state.todaysGames.length > 0)
-            return <GameCollectionNoWrap games={this.state.todaysGames} region={this.state.region} />
+    renderMyTournaments() {
+        if (this.state.myTournaments.length > 0)
+            return <GameCollectionNoWrap games={this.state.myTournaments} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned today
             </div>
     }
 
-    renderGamesOfTheWeek() {
-        if (this.state.gamesOfTheWeek.length > 0)
-            return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={this.state.region} />
+    renderTournaments() {
+        if (this.state.tournaments.length > 0)
+            return <GameCollectionNoWrap games={this.state.tournaments} region={this.state.region} />
         else
             return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
                 No games are planned this week
@@ -142,8 +143,8 @@ class GamesView extends PageBaseClass<BaseProps, States> {
                 {(this.state.user) ? <OrganizeForm show={this.state.showPostDialog} uid={this.state.user.id} posted={() => {
                     this.setState({ showPostDialog: false })
                     this.showSnackSuccessMsg("The game has been organized successfully")
-                    this.fetchTodaysGames()
-                    this.fetchGamesOfTheWeek()
+                    this.fetchMyTournaments()
+                    this.fetchTournaments()
                 }} onClose={() => this.setState({ showPostDialog: false })} /> : null}
                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "nowrap" }}>
                     {(this.state.openingSearch) ? <IconButton style={{ marginLeft: 16 }} onClick={() => {
@@ -155,13 +156,13 @@ class GamesView extends PageBaseClass<BaseProps, States> {
                 </div>
                 {(this.state.openingSearch) ? this.renderSearchResult() : <>
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        TODAY&apos;S GAMES
+                        MY TORNAMENTS
                     </Typography>
-                    {(this.state.loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderTodaysGames()}
+                    {(this.state.loadingMyTournaments) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderMyTournaments()}
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        GAMES THIS WEEK
+                        TOURNAMENTS
                     </Typography>
-                    {(this.state.loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderGamesOfTheWeek()}
+                    {(this.state.loadingTournaments) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderTournaments()}
                     {(this.state.user) ? <Fab aria-label={"Add"} style={{
                         position: 'absolute',
                         bottom: 80,
@@ -179,4 +180,4 @@ class GamesView extends PageBaseClass<BaseProps, States> {
     }
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(GamesView));
+export default withStyles(styles, { withTheme: true })(withRouter(TournamentsView));

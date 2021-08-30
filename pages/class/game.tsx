@@ -15,7 +15,7 @@ import { backgroundTheme, borderColor, darkerTextColor, themeColor } from "../..
 import { supabase } from "../../SupabaseManager";
 import ParticipantsView from "../../components/ParticipantsView";
 import Header from "../../components/Header";
-import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import PageBaseClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 
 interface Props extends BaseProps {
     metadata: GameMetaData | null
@@ -41,7 +41,7 @@ interface States extends BaseStates {
     sending: boolean
 }
 
-class GameView extends PageBase<Props, States> {
+class GameView extends PageBaseClass<Props, States> {
     state: States = {
         region: "class",
         selectedNavValue: "/",

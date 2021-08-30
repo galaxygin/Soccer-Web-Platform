@@ -9,7 +9,7 @@ import { GameCollectionNoWrap } from "../../components/GameList";
 import OrganizeForm from "../../components/OrganizeForm";
 import { GameHeader } from "../../Definitions";
 import { darkerTextColor, backgroundTheme } from "../../public/assets/styles/styles.web";
-import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import PageBaseClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 
 interface States extends BaseStates {
     loadingMyGames: boolean
@@ -19,7 +19,7 @@ interface States extends BaseStates {
     showPostDialog: boolean
 }
 
-class HomeView extends PageBase<BaseProps, States> {
+class HomeView extends PageBaseClass<BaseProps, States> {
     state: States = {
         region: "class",
         selectedNavValue: "/",

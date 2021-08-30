@@ -2,7 +2,7 @@ import { withStyles } from "@material-ui/styles";
 import { withRouter } from "next/router";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
-import PageBase, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import PageBasClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
 import Header from "../../components/Header"
 import React from "react";
 import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, TextField, Typography } from "@material-ui/core";
@@ -33,7 +33,7 @@ interface States extends BaseStates {
     headerAnchorEl?: HTMLElement | null
 }
 
-class PlayerView extends PageBase<Props, States> {
+class PlayerView extends PageBaseClass<Props, States> {
     state: States = {
         region: "class",
         selectedNavValue: "/",
