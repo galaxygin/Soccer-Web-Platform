@@ -11,11 +11,11 @@ import { getSimpleProfile } from "../../api/request/UserRequest";
 import { removeSecondsFromTime, formatDateToString, formatTimeToString } from "../../components/DateManager";
 import OrganizeForm from "../../components/OrganizeForm";
 import { baseUrl, Game, GameMetaData, getPlayerLevel, landscapeFieldImgURI, Message } from "../../Definitions";
-import { backgroundTheme, borderColor, darkerTextColor, themeColor } from "../../public/assets/styles/styles.web";
+import { backgroundTheme, borderColor, classStyles, darkerTextColor, themeColor } from "../../public/assets/styles/styles.web";
 import { supabase } from "../../SupabaseManager";
 import ParticipantsView from "../../components/ParticipantsView";
 import Header from "../../components/Header";
-import PageBaseClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import PageBaseClass, { BaseProps, BaseStates } from "../../components/PageBase";
 
 interface Props extends BaseProps {
     metadata: GameMetaData | null
@@ -344,4 +344,4 @@ export async function getServerSideProps(context: any) {
     }
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(GameView));
+export default withStyles(classStyles, { withTheme: true })(withRouter(GameView));

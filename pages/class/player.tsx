@@ -2,12 +2,12 @@ import { withStyles } from "@material-ui/styles";
 import { withRouter } from "next/router";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
-import PageBasClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import PageBaseClass, { BaseProps, BaseStates } from "../../components/PageBase";
 import Header from "../../components/Header"
 import React from "react";
 import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, TextField, Typography } from "@material-ui/core";
 import { Close, Edit, Done, AccountCircle, LockTwoTone } from "@material-ui/icons";
-import { darkerTextColor, defaultTheme } from "../../public/assets/styles/styles.web";
+import { classStyles, darkerTextColor, defaultTheme } from "../../public/assets/styles/styles.web";
 import Image from "next/image";
 import { ThumbnailUploader, HeaderUploader } from "../../components/ImageUploader";
 import { isMobile } from "react-device-detect";
@@ -20,7 +20,7 @@ interface Props extends BaseProps {
 
 interface States extends BaseStates {
     loading: boolean
-    player: Player | null
+    player?: Player
     editingProfile: boolean
     name: string
     bio: string
@@ -38,7 +38,6 @@ class PlayerView extends PageBaseClass<Props, States> {
         region: "class",
         selectedNavValue: "/",
         loading: true,
-        player: null,
         editingProfile: false,
         name: this.props.metadata.name,
         bio: this.props.metadata.name,
@@ -59,7 +58,7 @@ class PlayerView extends PageBaseClass<Props, States> {
     updateInfo() {
         getProfile(this.props.metadata.uid as string).then(player => {
             if (player) {
-                this.setState({ player: player, position: player.position, localArea: player.local_area!, header_url: player.header_url, visibility: (player.is_private) ? "private" : "public" })
+                this.setState({ player: player, name: player.name, bio: player.bio, position: player.position, localArea: player.local_area!, visibility: (player.is_private) ? "private" : "public" })
             }
         }).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loading: false }))
     }
@@ -77,7 +76,7 @@ class PlayerView extends PageBaseClass<Props, States> {
                     <IconButton onClick={() => updateProfile(this.state.user!.id, this.state.name, this.state.bio, this.state.position, this.state.localArea!, this.state.visibility).then(() => { this.updateInfo(); this.setState({ editingProfile: false }) }).catch(error => this.showSnackErrorMsg(error.message))} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
                 </div>
             else
-                return <IconButton onClick={() => this.setState({ editingProfile: false })} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
+                return <IconButton onClick={() => this.setState({ editingProfile: true })} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
         }
     }
 
@@ -195,7 +194,6 @@ class PlayerView extends PageBaseClass<Props, States> {
                                     <IconButton
                                         aria-label="Thumbnail of the player"
                                         aria-haspopup="true"
-                                        onClick={e => { if (this.isMyAccount()) this.setState({ thumbAnchorEl: e.currentTarget }) }}
                                         color="inherit"
                                     >
                                         {(this.state.player.thumbnail_url) ? <Image src={this.state.player.thumbnail_url} width={100} height={100} className={this.styles.thumbnailCircle100} alt={this.state.player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
@@ -252,4 +250,4 @@ export async function getServerSideProps(context: any) {
     }
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(PlayerView));
+export default withStyles(classStyles, { withTheme: true })(withRouter(PlayerView));

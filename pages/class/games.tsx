@@ -9,8 +9,8 @@ import { getGamesOfTheWeek, getTodaysGames, searchGames } from "../../api/reques
 import { GameCollection, GameCollectionNoWrap } from "../../components/GameList";
 import OrganizeForm from "../../components/OrganizeForm";
 import { GameHeader } from "../../Definitions";
-import { darkerTextColor, backgroundTheme } from "../../public/assets/styles/styles.web";
-import PageBaseClass, { BaseProps, BaseStates, styles } from "../../components/PageBase";
+import { darkerTextColor, backgroundTheme, classStyles } from "../../public/assets/styles/styles.web";
+import PageBaseClass, { BaseProps, BaseStates } from "../../components/PageBase";
 
 interface States extends BaseStates {
     loadingTodaysGames: boolean
@@ -179,4 +179,4 @@ class GamesView extends PageBaseClass<BaseProps, States> {
     }
 }
 
-export default withStyles(styles, { withTheme: true })(withRouter(GamesView));
+export default withStyles(classStyles, { withTheme: true })(withRouter(GamesView));
