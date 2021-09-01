@@ -192,36 +192,3 @@ const styles = (theme: Theme) => createStyles({
 export const useStyles = makeStyles(styles);
 
 export const classStyles = styles
-
-export const drawerStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            display: 'flex',
-        },
-        appBar: {
-            zIndex: theme.zIndex.drawer + 1,
-        },
-        menuButton: {
-            marginRight: theme.spacing(2),
-            [theme.breakpoints.up('sm')]: {
-                display: 'none',
-            },
-        },
-        drawer: {
-            [theme.breakpoints.up('sm')]: {
-                width: drawerWidth,
-                flexShrink: 0,
-            },
-        },
-        drawerPaper: {
-            width: drawerWidth,
-            backgroundColor: '#454545'
-        },
-        drawerContainer: {
-            backgroundColor: '#454545'
-        },
-        content: {
-            width: "100%"
-        },
-    }),
-);

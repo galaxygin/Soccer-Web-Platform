@@ -10,7 +10,7 @@ import { addUserToDB, getUser, signOut } from "../api/request/AuthRequest";
 import { getSimpleProfile, checkUserRegisteredAsPlayer } from "../api/request/UserRequest";
 import { SigninDialog } from "./SigninDialog";
 import { appName, regions } from "../Definitions";
-import { backgroundTheme, darkerTextColor, defaultTheme, drawerStyles, drawerWidth, goldColor, useStyles } from "../public/assets/styles/styles.web";
+import { backgroundTheme, darkerTextColor, defaultTheme, drawerWidth, goldColor, useStyles } from "../public/assets/styles/styles.web";
 import Header from "./Header";
 import Cookies from "universal-cookie";
 import { isMobile } from "react-device-detect";
@@ -640,7 +640,6 @@ interface props {
 
 export function PageBaseFunction({ content, detailView, wannaShowSigninDialog = false, onStateChanged = () => { }, closingSigninDialog = () => { }, header = <Header />, region = "au" }: props) {
     const styles = useStyles()
-    const drawerStyle = drawerStyles()
     const router = useRouter()
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [width, setWidth] = useState(0)
@@ -969,7 +968,7 @@ export function PageBaseFunction({ content, detailView, wannaShowSigninDialog = 
         return (
             <div className={styles.root}>
                 {header}
-                <AppBar position="fixed" className={drawerStyle.appBar}>
+                <AppBar position="fixed" className={styles.appBar}>
                     <Toolbar>
                         <Link href="/" color="inherit">
                             <Typography variant="h6" style={{ color: darkerTextColor }} noWrap>{appName}</Typography>
