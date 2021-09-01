@@ -1,17 +1,17 @@
 import DateFnsUtils from '@date-io/date-fns'
-import { Fab, Typography, Snackbar, CircularProgress, TextField, MenuItem, Button, IconButton } from '@material-ui/core'
+import { Fab, Typography, Snackbar, CircularProgress, TextField, MenuItem, IconButton } from '@material-ui/core'
 import { AddTwoTone, ChevronLeft, Close } from '@material-ui/icons'
 import Alert from '@material-ui/lab/Alert'
 import { MuiPickersUtilsProvider, KeyboardDatePicker } from '@material-ui/pickers'
 import { User } from '@supabase/supabase-js'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { isMobile } from 'react-device-detect'
 import { getTodaysGames, getGamesOfTheWeek, searchGames } from '../../api/request/GameTestRequest'
 import { GameCollection, GameCollectionNoWrap } from '../../components/GameList'
 import OrganizeForm from '../../components/OrganizeForm'
+import { PageBaseFunction } from '../../components/PageBase'
 import { GameHeader } from '../../Definitions'
 import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
-import PageBase from '../PageBase'
 
 const games = [{
     id: '1',
@@ -183,7 +183,7 @@ export default function GamesView() {
                 </div>
                 {(openingSearch) ? renderSearchResult() : <>
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        TODAY'S GAMES
+                        TODAY&apos;S GAMES
                     </Typography>
                     {(loadingTodaysGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderTodaysGame()}
                     <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -210,7 +210,7 @@ export default function GamesView() {
         )
     }
 
-    return <PageBase content={content()} region={"au"} onStateChanged={user => {
+    return <PageBaseFunction content={content()} region={"au"} onStateChanged={user => {
         setUser(user)
         fetchTodaysGames()
         fetchWeekGames()
