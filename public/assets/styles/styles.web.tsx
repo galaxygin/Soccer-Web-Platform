@@ -22,12 +22,15 @@ export const goldColor = "#f8b00d"
 
 export const headerTint = 'white'
 
-export const useStyles = makeStyles((theme) => ({
+const styles = (theme: Theme) => createStyles({
     root: {
         display: 'flex',
         backgroundColor: backgroundTheme
     },
     appBar: {
+        zIndex: theme.zIndex.drawer + 1,
+    },
+    drawerAppBar: {
         transition: theme.transitions.create(['margin', 'width'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
@@ -44,17 +47,25 @@ export const useStyles = makeStyles((theme) => ({
     },
     menuButton: {
         marginRight: theme.spacing(2),
+        [theme.breakpoints.up('sm')]: {
+            display: 'none',
+        },
     },
     hide: {
         display: 'none',
     },
     drawer: {
-        width: drawerWidth,
-        flexShrink: 0,
+        [theme.breakpoints.up('sm')]: {
+            width: drawerWidth,
+            flexShrink: 0,
+        },
     },
     drawerPaper: {
         width: drawerWidth,
         backgroundColor: backgroundTheme
+    },
+    drawerContainer: {
+        backgroundColor: '#454545'
     },
     drawerHeader: {
         display: 'flex',
@@ -164,6 +175,9 @@ export const useStyles = makeStyles((theme) => ({
         color: darkerTextColor,
         marginTop: 16
     },
+    thumbnailCircle100: {
+        borderRadius: 100
+    },
     thumbnailCircle48: {
         borderRadius: 24
     },
@@ -173,7 +187,11 @@ export const useStyles = makeStyles((theme) => ({
     thumbnailCircle30: {
         borderRadius: 15
     }
-}));
+});
+
+export const useStyles = makeStyles(styles);
+
+export const classStyles = styles
 
 export const drawerStyles = makeStyles((theme: Theme) =>
     createStyles({
