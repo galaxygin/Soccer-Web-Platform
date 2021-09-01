@@ -41,7 +41,7 @@ export type PlayerMetaData = {
 
 export type Game = {
     id: string
-    organizer: Player | SimpleProfile,
+    organizer: SimpleProfile,
     title: string,
     description: string,
     location: string,
@@ -52,10 +52,11 @@ export type Game = {
     participants: number
     max_players: number
     min_players: number
-    custom_rules: string | null
-    requirements: string | null
-    status: string | null
+    custom_rules?: string
+    requirements?: string
+    status?: string
     region: string
+    header_url?: string
 }
 
 export type GameMetaData = {
@@ -68,13 +69,13 @@ export type GameMetaData = {
 
 export type GameHeader = {
     id: string
-    organizer: Player | SimpleProfile
+    organizer: SimpleProfile
     title: string
     location: string
     date: Date
     time: Date
     player_level: number
-    passcode: string | null
+    passcode?: string
     participants: number
     status: string
 }
@@ -85,6 +86,49 @@ export type Message = {
     sender: SimpleProfile
     content: any
     timestamp: Date
+}
+
+export type Tournament = {
+    id: string
+    organizer: SimpleProfile
+    name: string
+    description: string
+    requirements?: string
+    rules?: string
+    date: Date
+    time: Date
+    location: string
+    region: string
+    level: number
+    players_per_team: number
+    fee_per_player: number
+    max_teams: number
+    start_from: Date
+    winner_prize: string
+    header_url?: string
+    passcode?: string
+    status?: string
+    timestamp: Date
+}
+
+export type TournammentMetaData = {
+    id: string
+    organizer: string
+    title: string
+    description: string
+    passcode: boolean
+}
+
+export type TournamentHeader = {
+    id: string
+    organizer: SimpleProfile
+    title: string
+    location: string
+    date: Date
+    time: Date
+    player_level: number
+    passcode?: string
+    status: string
 }
 
 export type Manager = {
