@@ -27,7 +27,7 @@ export interface BaseStates {
     height?: number
     selectedNavValue: string
     thumbnail_url?: string
-    header_url?: string | null
+    header_url?: string
     showSetupDialog?: boolean
     name?: string
     bio?: string
@@ -47,6 +47,7 @@ export interface BaseStates {
     snackErrorMsg?: string,
     anchorEl?: HTMLElement | null
     user?: User | null
+    window?: Window
 }
 
 const cookies = new Cookies();
@@ -83,7 +84,8 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
             changingRegion: false,
             snackSuccessMsg: "",
             snackErrorMsg: "",
-            anchorEl: null
+            anchorEl: null,
+            window: window
         })
         console.log(getUser())
         if (getUser()) {
@@ -147,6 +149,15 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
         this.setState({ showSigninDialog: true })
     }
 
+    onSignedIn() {
+        this.state.window?.location.reload()
+    }
+
+    onSignedOut() {
+        cookies.remove("user_setup_finished")
+        this.state.window?.location.reload()
+    }
+
     handleMenuClose = () => {
         this.setState({ anchorEl: null })
     }
@@ -169,10 +180,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                     }}>Profile <AccountCircle style={{ marginLeft: 8 }} /></MenuItem>
                     <MenuItem onClick={() => {
                         this.handleMenuClose()
-                        signOut().then(() => {
-                            cookies.remove("user_setup_finished")
-                            window.location.href = "/" + this.state.region
-                        })
+                        signOut().then(() => this.onSignedOut())
                     }}>Sign out</MenuItem>
                 </Menu>
             )
@@ -352,7 +360,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
     render() {
         if (isMobile) {
             return (
-                <div className={this.styles.root} style={{ overflow: "hidden" }}>
+                <div className={this.styles.root}>
                     {this.renderHeader()}
                     <AppBar position="fixed" >
                         <Toolbar>
@@ -372,16 +380,18 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                             </IconButton>
                         </Toolbar>
                     </AppBar>
-                    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: this.state.height, overflow: "hidden" }}>
-                        <main style={{ backgroundColor: defaultTheme, width: "100%", overflow: "scroll" }}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: this.state.height }}>
+                        <main style={{ backgroundColor: defaultTheme, width: "100%", marginBottom: 56 }}>
                             <div className={this.styles.drawerHeader} />
                             <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
-                                this.setState({ showSigninDialog: false })
+                                this.onSignedIn()
                             }} onClose={() => {
                                 this.setState({ showSigninDialog: false })
                             }} />
                             <div style={{ height: 5 }} />
-                            {this.renderContent()}
+                            <div style={{ width: this.state.width, height: this.state.height! - 115, overflow: "scroll" }}>
+                                {this.renderContent()}
+                            </div>
                         </main>
                         <BottomNavigation
                             value={this.state.selectedNavValue}
@@ -390,7 +400,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                                 router.push("/" + this.state.region + "/" + value)
                             }}
                             showLabels
-                            style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}
+                            style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid", bottom: 0, position: "fixed" }}
                         >
                             <BottomNavigationAction label="Home" icon={<Home style={{ color: goldColor }} />} value="/" style={{ color: darkerTextColor }} />
                             <BottomNavigationAction label="Games" icon={<SportsSoccerTwoTone style={{ color: goldColor }} />} value="games" style={{ color: darkerTextColor }} />
@@ -433,7 +443,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                     <main style={{ width: this.state.width, display: 'flex', flexDirection: 'column' }}>
                         <div className={this.styles.drawerHeader} />
                         <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
-                            this.setState({ showSigninDialog: false })
+                            this.onSignedIn()
                         }} onClose={() => {
                             this.setState({ showSigninDialog: false })
                         }} />
