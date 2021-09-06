@@ -212,7 +212,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
         switch (this.state.region) {
             case "jp":
                 return (
-                    <Dialog open={this.state.showSetupDialog!} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
+                    <Dialog open={(this.state.showSetupDialog) ? this.state.showSetupDialog : false} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
                         <DialogTitle>プロフィール設定</DialogTitle>
                         <DialogContent>
                             {(this.state.setupErrorMsg) ? <Alert severity="error">{this.state.setupErrorMsg}</Alert> : null}
@@ -259,7 +259,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                 )
             default:
                 return (
-                    <Dialog open={this.state.showSetupDialog!} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
+                    <Dialog open={(this.state.showSetupDialog) ? this.state.showSetupDialog : false} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
                         <DialogTitle>Setup Profile</DialogTitle>
                         <DialogContent>
                             {(this.state.setupErrorMsg) ? <Alert severity="error">{this.state.setupErrorMsg}</Alert> : null}
