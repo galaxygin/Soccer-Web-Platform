@@ -17,6 +17,8 @@ import { isMobile } from "react-device-detect";
 import { ThumbnailUploader, HeaderUploader } from "./ImageUploader";
 import Image from "next/image";
 
+var TranslationXML = require('xml-loader!../public/assets/Translations.xml');
+
 export interface BaseProps extends WithStyles<typeof styles>, WithRouterProps {
     region: string
 }
@@ -54,6 +56,7 @@ const cookies = new Cookies();
 
 export default abstract class PageBaseClass<Props extends BaseProps, State extends BaseStates, SS = any> extends React.Component<Props, State, SS> {
     styles: Props["classes"];
+    languages = TranslationXML.xml.Translations[0]
 
     constructor(props: Props) {
         super(props);
@@ -146,6 +149,10 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
 
     showSigninDialog() {
         this.setState({ showSigninDialog: true })
+    }
+
+    getTranslationOfLanguage(language: string, key: string) {
+        return this.languages[language][0][key][0]
     }
 
     handleMenuClose = () => {
