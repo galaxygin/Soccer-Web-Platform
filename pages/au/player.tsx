@@ -1,161 +1,147 @@
-import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, Snackbar, TextField, Typography } from "@material-ui/core";
-import React, { useState, useEffect } from "react";
+import { withStyles } from "@material-ui/styles";
+import { withRouter } from "next/router";
 import { getPlayerMetaData, getProfile, updateProfile } from "../../api/request/UserRequest";
 import { baseUrl, landscapeFieldImgURI, Player, PlayerMetaData } from "../../Definitions";
-import Image from 'next/image'
-import { darkerTextColor, defaultTheme, useStyles } from "../../public/assets/styles/styles.web";
-import { useRouter } from "next/router";
-import { AccountCircle, Close, Done, Edit, LockTwoTone } from "@material-ui/icons";
-import { Alert } from "@material-ui/lab";
-import { User } from "@supabase/supabase-js";
-import Header from "../../components/Header";
-import { HeaderUploader, ThumbnailUploader } from "../../components/ImageUploader";
+import PageBaseClass, { BaseProps, BaseStates } from "../../components/PageBase";
+import Header from "../../components/Header"
+import React from "react";
+import { Button, CircularProgress, Dialog, DialogActions, IconButton, Menu, MenuItem, TextField, Typography } from "@material-ui/core";
+import { Close, Edit, Done, AccountCircle, LockTwoTone } from "@material-ui/icons";
+import { classStyles, darkerTextColor, defaultTheme } from "../../public/assets/styles/styles.web";
+import Image from "next/image";
+import { ThumbnailUploader, HeaderUploader } from "../../components/ImageUploader";
 import { isMobile } from "react-device-detect";
-import { useCallback } from "react";
-import { PageBaseFunction } from "../../components/PageBase";
 
-interface props {
-    metadata: PlayerMetaData | null
+interface Props extends BaseProps {
+    metadata: PlayerMetaData
     url: string
     site_name: string
 }
 
-export default function PlayerView({ metadata, url, site_name }: props) {
-    const styles = useStyles()
-    const router = useRouter()
-    const [player, setPlayer] = useState<Player | null>(null)
-    const [user, setUser] = useState<User | null>()
-    const [loading, setLoading] = useState(true)
-    const [width, setWidth] = useState(0)
-    const [height, setHeight] = useState(0)
-    const [showSnackbar, openSnackbar] = useState(false)
+interface States extends BaseStates {
+    loading: boolean
+    player?: Player
+    editingProfile: boolean
+    name: string
+    bio: string
+    position: string
+    localArea?: string
+    visibility: string
+    changeThumb: boolean
+    changeHeader: boolean
+    thumbAnchorEl?: HTMLElement | null
+    headerAnchorEl?: HTMLElement | null
+}
 
-    const [editingProfile, changingProfile] = useState(false)
-    const [name, setName] = useState("")
-    const [bio, setBio] = useState("")
-    const [position, setPosition] = useState("Anywhere")
-    const [localArea, setLocalArea] = useState<string | undefined>("")
-    const [thumbnail_url, setThumbnailUrl] = useState<string>()
-    const [header_url, setHeaderUrl] = useState<string>()
-    const [visibility, setVisibility] = useState("public")
-    const [profileErrorMsg, setProfileErrorMsg] = useState(null)
+class PlayerView extends PageBaseClass<Props, States> {
+    state: States = {
+        region: "au",
+        language: "English",
+        selectedNavValue: "/",
+        loading: true,
+        editingProfile: false,
+        name: this.props.metadata.name,
+        bio: this.props.metadata.name,
+        position: "",
+        visibility: "public",
+        changeThumb: false,
+        changeHeader: false
+    }
 
-    const [changeThumb, changingThumb] = useState(false)
-    const [changeHeader, changingHeader] = useState(false)
-
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-    const isMenuOpen = Boolean(anchorEl);
-
-    const [headerAnchorEl, setHeaderAnchorEl] = useState<HTMLElement | null>(null);
-    const isHeaderMenuOpen = Boolean(headerAnchorEl);
-
-    const updateInfo = useCallback(() => {
-        getProfile(metadata!.uid).then(player => {
-            if (player) {
-                setPlayer(player)
-                setName(player.name)
-                setBio(player.bio)
-                setPosition(player.position)
-                setLocalArea(player.local_area)
-                setThumbnailUrl(player.thumbnail_url)
-                setHeaderUrl(player.header_url)
-                setVisibility((player.is_private) ? "private" : "public")
-            }
-        }).catch(error => console.log(error.message)).finally(() => setLoading(false))
-    }, [metadata])
-
-    useEffect(() => {
-        setWidth(window.innerWidth)
-        setHeight(window.innerHeight)
-    }, [])
-
-    useEffect(() => {
-        if (metadata) {
-            updateInfo()
+    onBaseLoaded() {
+        if (this.props.metadata.uid) {
+            this.updateInfo()
             return
         }
-        setLoading(false)
-    }, [metadata, updateInfo])
-
-    function isMyAccount(): boolean {
-        return metadata?.uid == user?.id
+        this.setState({ loading: false })
     }
 
-    function editButton() {
-        if (isMyAccount()) {
-            if (editingProfile)
+    updateInfo() {
+        getProfile(this.props.metadata.uid as string).then(player => {
+            if (player) {
+                this.setState({ player: player, name: player.name, bio: player.bio, position: player.position, localArea: player.local_area!, visibility: (player.is_private) ? "private" : "public" })
+            }
+        }).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loading: false }))
+    }
+
+    isMyAccount(): boolean {
+        return this.props.metadata.uid === this.state.user!.id
+    }
+
+    editButton() {
+        if (this.isMyAccount()) {
+            if (this.state.editingProfile)
                 return <div style={{ display: 'flex', flexDirection: "row" }}>
-                    <IconButton onClick={() => changingProfile(false)} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "red", color: "white" }}><Close /></IconButton>
+                    <IconButton onClick={() => this.setState({ editingProfile: false })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "red", color: "white" }}><Close /></IconButton>
                     <div style={{ flexGrow: 1 }} />
-                    <IconButton onClick={() => updateProfile(user!.id, name, bio, position, visibility, localArea).then(() => { updateInfo(); changingProfile(false) }).catch(error => { setProfileErrorMsg(error.message); openSnackbar(true) })} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
+                    <IconButton onClick={() => updateProfile(this.state.user!.id, this.state.name, this.state.bio, this.state.position, this.state.localArea!, this.state.visibility).then(() => { this.updateInfo(); this.setState({ editingProfile: false }) }).catch(error => this.showSnackErrorMsg(error.message))} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "green", color: "white" }}><Done /></IconButton>
                 </div>
             else
-                return <IconButton onClick={() => changingProfile(true)} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
+                return <IconButton onClick={() => this.setState({ editingProfile: true })} style={{ width: 50, height: 50, borderRadius: 25, marginRight: 16, backgroundColor: "green", color: "white", alignSelf: "start" }}><Edit /></IconButton>
         }
     }
 
+    renderHeader() {
+        if (this.props.metadata)
+            return <Header title={this.props.metadata.name} description={(this.props.metadata.is_private) ? "[Private] This player is private account" : this.props.metadata.bio} thumbnail_url={this.props.metadata.thumbnail_url} url={baseUrl + this.props.url} site_name={this.props.site_name} />
+        return <Header title={"Couldn't get title"} description={"Couldn't get description"} url={baseUrl + this.props.url} site_name={this.props.site_name} />
+    }
 
-    function content() {
-        if (player) {
-            if (user)
+    renderContent() {
+        if (this.state.player) {
+            if (this.state.user)
                 return (
-                    <div style={{ display: "flex", flexDirection: "column", height: height - 115 }}>
+                    <div style={{ display: "flex", flexDirection: "column", height: this.state.height! - 115 }}>
                         <Menu
-                            anchorEl={anchorEl}
+                            anchorEl={this.state.thumbAnchorEl}
                             anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                             id={"thumbnail_menu"}
                             keepMounted
                             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                            open={isMenuOpen}
-                            onClose={e => setAnchorEl(null)}
+                            open={(this.state.thumbAnchorEl) ? true : false}
+                            onClose={e => this.setState({ thumbAnchorEl: null })}
                         >
-                            <MenuItem onClick={() => {
-                                setAnchorEl(null)
-                                changingThumb(true)
-                            }}>Update thumbnail</MenuItem>
+                            <MenuItem onClick={() => this.setState({ thumbAnchorEl: null, changeThumb: true })}>Update thumbnail</MenuItem>
                         </Menu>
                         <Menu
-                            anchorEl={headerAnchorEl}
+                            anchorEl={this.state.headerAnchorEl}
                             anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                             id={"header_menu"}
                             keepMounted
                             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                            open={isHeaderMenuOpen}
-                            onClose={e => setHeaderAnchorEl(null)}
+                            open={(this.state.headerAnchorEl) ? true : false}
+                            onClose={e => this.setState({ headerAnchorEl: null })}
                         >
-                            <MenuItem onClick={() => {
-                                setHeaderAnchorEl(null)
-                                changingHeader(true)
-                            }}>Update header</MenuItem>
+                            <MenuItem onClick={() => this.setState({ headerAnchorEl: null, changeHeader: true })}>Update header</MenuItem>
                         </Menu>
-                        <Dialog open={changeThumb} onClose={() => changingThumb(false)} fullWidth>
-                            <ThumbnailUploader uid={user.id} region={"au"} onSuccess={url => setThumbnailUrl(url)} />
+                        <Dialog open={this.state.changeThumb} onClose={() => this.setState({ newThumb: undefined, changeThumb: false })} fullWidth>
+                            <ThumbnailUploader uid={this.state.user.id} region={"au"} onSuccess={url => this.setState(prevState => ({ player: { ...prevState.player!, thumbnail_url: url } }))} />
                             <DialogActions style={{ backgroundColor: 'white', marginTop: 32 }}>
-                                <Button variant="outlined" onClick={() => changingThumb(false)}>Close</Button>
+                                <Button variant="outlined" onClick={() => this.setState({ changeThumb: false })}>Close</Button>
                                 <div style={{ flexGrow: 1 }} />
-                                <Button variant="outlined" onClick={() => changingThumb(false)}>Done</Button>
+                                <Button variant="outlined" onClick={() => this.setState({ changeThumb: false })}>Done</Button>
                             </DialogActions>
                         </Dialog>
-                        <Dialog open={changeHeader} onClose={() => changingHeader(false)} fullWidth>
-                            <HeaderUploader uid={user.id} region={"au"} onSuccess={url => setHeaderUrl(url)} imagePreviewWidth={width * 0.5} />
+                        <Dialog open={this.state.changeHeader} onClose={() => this.setState({ newHeader: undefined, changeHeader: false })} fullWidth>
+                            <HeaderUploader uid={this.state.user.id} region={"au"} onSuccess={url => this.setState(prevState => ({ player: { ...prevState.player!, header_url: url } }))} imagePreviewWidth={this.state.width! * 0.5} />
                             <DialogActions style={{ backgroundColor: 'white', marginTop: 32 }}>
-                                <Button variant="outlined" onClick={() => changingHeader(false)}>Close</Button>
+                                <Button variant="outlined" onClick={() => this.setState({ changeHeader: false })}>Close</Button>
                                 <div style={{ flexGrow: 1 }} />
-                                <Button variant="outlined" onClick={() => changingHeader(false)}>Done</Button>
+                                <Button variant="outlined" onClick={() => this.setState({ changeHeader: false })}>Done</Button>
                             </DialogActions>
                         </Dialog>
-                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={"player's header"} onClick={e => {
-                            if (isMyAccount()) { setHeaderAnchorEl(e.currentTarget) }
+                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} alt={"player's header"} onClick={e => {
+                            if (this.isMyAccount()) { this.setState({ headerAnchorEl: e.currentTarget }) }
                         }} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
-                            {(editingProfile) ? <div style={{ display: "flex", padding: 16, flexDirection: "column" }}>
-                                {editButton()}
-                                <TextField label="Visibility" variant="outlined" className={styles.formTextField} onChange={e => setVisibility(e.target.value)} defaultValue={visibility} select>
+                            {(this.state.editingProfile) ? <div style={{ display: "flex", padding: 16, flexDirection: "column" }}>
+                                {this.editButton()}
+                                <TextField label="Visibility" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ visibility: e.target.value })} defaultValue={this.state.visibility} select>
                                     <MenuItem key={"public"} value={"public"}>Public</MenuItem>
                                     <MenuItem key={"private"} value={"private"}>Private</MenuItem>
                                 </TextField>
-                                <TextField label="Name" variant="outlined" className={styles.formTextField} onChange={e => setName(e.target.value)} value={name} />
-                                <TextField label="Position" variant="outlined" className={styles.formTextField} onChange={e => setPosition(e.target.value)} defaultValue={position} select>
+                                <TextField label="Name" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ name: e.target.value })} value={this.state.name} />
+                                <TextField label="Position" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ position: e.target.value })} defaultValue={this.state.position} select>
                                     <MenuItem key={""} value={""}>Anywhere</MenuItem>
                                     <MenuItem key={"GK"} value={"GK"}>GK</MenuItem>
                                     <MenuItem key={"CB"} value={"CB"}>CB</MenuItem>
@@ -165,47 +151,44 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                                     <MenuItem key={"LW"} value={"LW"}>LW</MenuItem>
                                     <MenuItem key={"RW"} value={"RW"}>RW</MenuItem>
                                 </TextField>
-                                <TextField label="Local area" variant="outlined" className={styles.formTextField} onChange={e => setLocalArea(e.target.value)} value={localArea} />
-                                <TextField label="Bio" variant="outlined" className={styles.formTextField} onChange={e => setBio(e.target.value)} value={bio} fullWidth multiline minRows={4} />
+                                <TextField label="Local area" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ localArea: e.target.value })} value={this.state.localArea} />
+                                <TextField label="Bio" variant="outlined" className={this.styles.formTextField} onChange={e => this.setState({ bio: e.target.value })} value={this.state.bio} fullWidth multiline minRows={4} />
                             </div> : <div style={{ display: "flex", paddingTop: 16, paddingLeft: 8, flexDirection: "column" }}>
                                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", height: 100 }}>
                                     <IconButton
                                         aria-label="Thumbnail of the player"
                                         aria-haspopup="true"
-                                        onClick={e => { if (isMyAccount()) setAnchorEl(e.currentTarget) }}
+                                        onClick={e => { if (this.isMyAccount()) this.setState({ thumbAnchorEl: e.currentTarget }) }}
                                         color="inherit"
                                     >
-                                        {(thumbnail_url) ? <Image src={thumbnail_url} width={100} height={100} className={styles.thumbnailCircle100} alt={player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(this.state.player.thumbnail_url) ? <Image src={this.state.player.thumbnail_url} width={100} height={100} className={this.styles.thumbnailCircle100} alt={this.state.player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                                             <Typography component={"div"} variant={"h5"} style={{ fontWeight: "bold", color: darkerTextColor, marginRight: 8 }}>
-                                                {player.name}
+                                                {this.state.player.name}
                                             </Typography>
-                                            {(player.is_private) ? <LockTwoTone style={{ width: 24, height: 24 }} /> : <div style={{ width: 24, height: 24 }} />}
+                                            {(this.state.player.is_private) ? <LockTwoTone style={{ width: 24, height: 24 }} /> : <div style={{ width: 24, height: 24 }} />}
                                         </div>
                                         <Typography style={{ color: darkerTextColor, marginTop: 16 }}>
-                                            Position: {player.position}<br />
-                                            Local area: {player.local_area}
+                                            Position: {this.state.player.position}<br />
+                                            Local area: {this.state.player.local_area}
                                         </Typography>
                                     </div>
                                     <div style={{ flexGrow: 1 }} />
-                                    {editButton()}
+                                    {this.editButton()}
                                 </div>
                                 <Typography component={"div"} style={{ color: darkerTextColor, padding: 16 }}>
-                                    {player.bio}
+                                    {this.state.player.bio}
                                 </Typography>
                             </div>}
                         </div>
-                        <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-                            <Alert onClose={() => openSnackbar(false)} severity="error">{profileErrorMsg}</Alert>
-                        </Snackbar>
                     </div >
                 )
             else
                 return (
-                    <div style={{ display: "flex", flexDirection: "column", height: height - 115 }}>
-                        <Image src={(header_url) ? header_url : landscapeFieldImgURI} width={(isMobile) ? width : width * 0.5} height={300} alt={"player's header"} />
+                    <div style={{ display: "flex", flexDirection: "column", height: this.state.height! - 115 }}>
+                        <Image src={(this.state.player.header_url) ? this.state.player.header_url : landscapeFieldImgURI} width={(isMobile) ? this.state.width : this.state.width! * 0.5} height={300} alt={"player's header"} />
                         <div style={{ backgroundColor: defaultTheme, height: "100%", borderColor: "white", borderWidth: 1, borderStyle: "solid" }}>
                             <div style={{ display: "flex", paddingTop: 16, paddingLeft: 8, flexDirection: "column" }}>
                                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "100%", height: 100 }}>
@@ -213,32 +196,31 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                                         aria-label="Thumbnail of the player"
                                         aria-haspopup="true"
                                         color="inherit"
-                                        disabled
                                     >
-                                        {(thumbnail_url) ? <Image src={thumbnail_url} width={100} height={100} className={styles.thumbnailCircle100} alt={player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
+                                        {(this.state.player.thumbnail_url) ? <Image src={this.state.player.thumbnail_url} width={100} height={100} className={this.styles.thumbnailCircle100} alt={this.state.player.name} /> : <AccountCircle style={{ width: 100, height: 100, borderRadius: 50 }} />}
                                     </IconButton>
                                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                                             <Typography component={"div"} variant={"h5"} style={{ fontWeight: "bold", color: darkerTextColor, marginRight: 8 }}>
-                                                {player.name}
+                                                {this.state.player.name}
                                             </Typography>
-                                            {(player.is_private) ? <LockTwoTone style={{ width: 24, height: 24 }} /> : <div style={{ width: 24, height: 24 }} />}
+                                            {(this.state.player.is_private) ? <LockTwoTone style={{ width: 24, height: 24 }} /> : <div style={{ width: 24, height: 24 }} />}
                                         </div>
                                         <Typography style={{ color: darkerTextColor, marginTop: 16 }}>
-                                            Position: {player.position}<br />
-                                            Local area: {player.local_area}
+                                            Position: {this.state.player.position}<br />
+                                            Local area: {this.state.player.local_area}
                                         </Typography>
                                     </div>
                                 </div>
                                 <Typography component={"div"} style={{ color: darkerTextColor, padding: 16 }}>
-                                    {player.bio}
+                                    {this.state.player.bio}
                                 </Typography>
                             </div>
                         </div>
                     </div >
                 )
         } else {
-            if (loading)
+            if (this.state.loading)
                 return (
                     <div style={{ display: "flex", flexDirection: 'column', justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
                         <CircularProgress style={{ color: darkerTextColor }} />
@@ -254,10 +236,6 @@ export default function PlayerView({ metadata, url, site_name }: props) {
                 )
         }
     }
-
-    return <PageBaseFunction content={content()} header={<Header title={(metadata) ? metadata.name : "Couldn't get player name"} description={(metadata?.is_private) ? "Private or couldn't get player bio" : metadata?.bio} thumbnail_url={metadata?.thumbnail_url} url={baseUrl + url} site_name={site_name} />} region={"au"} onStateChanged={user => {
-        setUser(user)
-    }} />
 }
 
 export async function getServerSideProps(context: any) {
@@ -272,3 +250,5 @@ export async function getServerSideProps(context: any) {
         return { props: { metadata: null, url: context["resolvedUrl"], site_name: context["req"].headers.host } }
     }
 }
+
+export default withStyles(classStyles, { withTheme: true })(withRouter(PlayerView));

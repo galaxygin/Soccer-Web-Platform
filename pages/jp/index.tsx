@@ -1,76 +1,89 @@
-import { Fab, Typography, Snackbar, CircularProgress } from '@material-ui/core'
-import { AddTwoTone } from '@material-ui/icons'
-import Alert from '@material-ui/lab/Alert'
-import { User } from '@supabase/supabase-js'
-import React, { useState } from 'react'
-import { isMobile } from 'react-device-detect'
-import { getGamesOfTheWeek, getMyGames } from '../../api/request/GameTestRequest'
-import { GameCollectionNoWrap } from '../../components/GameList'
-import OrganizeForm from '../../components/OrganizeForm'
-import { PageBaseFunction } from '../../components/PageBase'
-import { GameHeader } from '../../Definitions'
-import { backgroundTheme, darkerTextColor, useStyles } from '../../public/assets/styles/styles.web'
+import { Typography, CircularProgress, Fab } from "@material-ui/core";
+import { AddTwoTone } from "@material-ui/icons";
+import { withStyles } from "@material-ui/styles";
+import { withRouter } from "next/router";
+import React from "react";
+import { isMobile } from "react-device-detect";
+import { getGamesOfTheWeek, getMyGames } from "../../api/request/GameTestRequest";
+import { GameCollectionNoWrap } from "../../components/GameList";
+import OrganizeForm from "../../components/OrganizeForm";
+import { GameHeader } from "../../Definitions";
+import { darkerTextColor, backgroundTheme, classStyles } from "../../public/assets/styles/styles.web";
+import PageBaseClass, { BaseProps, BaseStates } from "../../components/PageBase";
 
-export default function HomeView() {
-  const styles = useStyles()
-  const [loadingMyGames, setLoadingMyGames] = useState(true)
-  const [myGames, setMyGames] = useState<GameHeader[]>([])
-  const [loadingGamesOfTheWeek, setLoadingGamesOfTheWeek] = useState(true)
-  const [gamesOfTheWeek, setGamesOfTheWeek] = useState<GameHeader[]>([])
-  const [user, setUser] = useState<User | null>()
+interface States extends BaseStates {
+  loadingMyGames: boolean
+  myGames: GameHeader[]
+  loadingGamesOfTheWeek: boolean
+  gamesOfTheWeek: GameHeader[]
+  showPostDialog: boolean
+}
 
-  const [postDialog, openPostDialog] = useState(false)
-  const [showSnackbar, openSnackbar] = useState(false)
-
-  function fetchMyGames(uid: string) {
-    setLoadingMyGames(true)
-    getMyGames(uid).then(games => setMyGames(games)).catch(error => console.log(error.message)).finally(() => setLoadingMyGames(false))
+class HomeView extends PageBaseClass<BaseProps, States> {
+  state: States = {
+    region: "jp",
+    language: "Japanese",
+    selectedNavValue: "/",
+    loadingMyGames: true,
+    myGames: [],
+    loadingGamesOfTheWeek: true,
+    gamesOfTheWeek: [],
+    showPostDialog: false
   }
 
-  function fetchWeekGames() {
-    setLoadingGamesOfTheWeek(true)
-    getGamesOfTheWeek().then(games => setGamesOfTheWeek(games)).catch(error => console.log(error.message)).finally(() => setLoadingGamesOfTheWeek(false))
+  onBaseLoaded() {
+    if (this.state.user) {
+      this.fetchMyGames()
+    }
+    this.fetchWeekGames()
   }
 
-  function renderMyGames() {
-    if (myGames.length > 0)
-      return <GameCollectionNoWrap games={myGames} region={"jp"} />
+  fetchMyGames() {
+    this.setState({ loadingMyGames: true })
+    getMyGames(this.state.user!.id).then(games => this.setState({ myGames: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingMyGames: false }))
+  }
+
+  fetchWeekGames() {
+    this.setState({ loadingGamesOfTheWeek: true })
+    getGamesOfTheWeek().then(games => this.setState({ gamesOfTheWeek: games })).catch(error => this.showSnackErrorMsg(error.message)).finally(() => this.setState({ loadingGamesOfTheWeek: false }))
+  }
+
+  renderMyGames() {
+    if (this.state.myGames.length > 0)
+      return <GameCollectionNoWrap games={this.state.myGames} region={this.state.region} />
     else
       return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
         ゲームの取得に失敗したか、あなたが参加・主催しているゲームはありません。
       </div>
   }
 
-  function renderGamesOfTheWeek() {
-    if (gamesOfTheWeek.length > 0)
-      return <GameCollectionNoWrap games={gamesOfTheWeek} region={"jp"} />
+  renderGamesOfTheWeek() {
+    if (this.state.gamesOfTheWeek.length > 0)
+      return <GameCollectionNoWrap games={this.state.gamesOfTheWeek} region={this.state.region} />
     else
       return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300, color: darkerTextColor }}>
         ゲームの取得に失敗したか、今週予定されてるゲームはありません。
       </div>
   }
 
-  function content() {
-    if (user) {
+  renderContent() {
+    if (this.state.user) {
       return (
         <div style={{ paddingTop: 16 }}>
-          <OrganizeForm show={postDialog} uid={user.id} region={"jp"} posted={() => {
-            openPostDialog(false)
-            openSnackbar(true)
-            fetchMyGames(user.id)
-            fetchWeekGames()
-          }} onClose={() => openPostDialog(false)} />
+          <OrganizeForm show={this.state.showPostDialog} uid={this.state.user.id} posted={() => {
+            this.setState({ showPostDialog: false })
+            this.showSnackSuccessMsg("ゲームの投稿に成功しました")
+            this.fetchMyGames()
+            this.fetchWeekGames()
+          }} onClose={() => this.setState({ showPostDialog: false })} />
           <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
             マイゲーム
           </Typography>
-          {(loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderMyGames()}
+          {(this.state.loadingMyGames) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderMyGames()}
           <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
             今週のゲーム
           </Typography>
-          {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
-          <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-            <Alert onClose={() => openSnackbar(false)} severity="success">ゲームの企画に成功しました。</Alert>
-          </Snackbar>
+          {(this.state.loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderGamesOfTheWeek()}
           <Fab aria-label={"Add"} style={{
             position: 'absolute',
             bottom: 80,
@@ -78,30 +91,22 @@ export default function HomeView() {
             backgroundColor: backgroundTheme,
             color: "white"
           }} onClick={() => {
-            openPostDialog(true)
+            this.setState({ showPostDialog: true })
           }}>
-            {<AddTwoTone />}
+            <AddTwoTone />
           </Fab>
         </div >
       )
-    } else {
-      return <div style={{ paddingTop: 16 }}>
-        <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          今週のゲーム
-        </Typography>
-        {(loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : renderGamesOfTheWeek()}
-        <Snackbar open={showSnackbar} autoHideDuration={6000} onClose={() => openSnackbar(false)}>
-          <Alert onClose={() => openSnackbar(false)} severity="success">ゲームの企画に成功しました。</Alert>
-        </Snackbar>
-      </div >
-    }
+    } else
+      return (
+        <div style={{ paddingTop: 16 }}>
+          <Typography component={"div"} variant="h4" style={{ color: darkerTextColor, fontWeight: "bold", fontFamily: "norwester", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            今週のゲーム
+          </Typography>
+          {(this.state.loadingGamesOfTheWeek) ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><CircularProgress style={{ color: backgroundTheme }} /></div> : this.renderGamesOfTheWeek()}
+        </div >
+      )
   }
-
-  return <PageBaseFunction content={content()} region={"jp"} onStateChanged={user => {
-    if (user) {
-      fetchMyGames(user.id)
-    }
-    setUser(user)
-    fetchWeekGames()
-  }} />
 }
+
+export default withStyles(classStyles, { withTheme: true })(withRouter(HomeView))

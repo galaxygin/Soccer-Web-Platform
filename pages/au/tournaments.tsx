@@ -31,7 +31,8 @@ interface States extends BaseStates {
 
 class TournamentsView extends PageBaseClass<BaseProps, States> {
     state: States = {
-        region: "class",
+        region: "au",
+        language: "English",
         selectedNavValue: "tournaments",
         loadingMyTournaments: false,
         myTournaments: [],
