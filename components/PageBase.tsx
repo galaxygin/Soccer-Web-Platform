@@ -1,6 +1,7 @@
-import { AppBar, Toolbar, Link, Typography, IconButton, TextField, MenuItem, Snackbar, Menu, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, BottomNavigation, BottomNavigationAction, WithStyles } from "@material-ui/core";
+import { AppBar, Toolbar, Link, Typography, IconButton, TextField, MenuItem, Snackbar, alpha, Theme, Menu, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, BottomNavigation, BottomNavigationAction, WithStyles } from "@material-ui/core";
 import { AccountCircle, Home, SportsSoccerTwoTone, EmojiEventsTwoTone, Search } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
+import { createStyles } from "@material-ui/styles";
 import { User } from "@supabase/supabase-js";
 import { WithRouterProps } from "next/dist/client/with-router";
 import router, { useRouter } from "next/router";
@@ -9,14 +10,16 @@ import { addUserToDB, getUser, signOut } from "../api/request/AuthRequest";
 import { getSimpleProfile, checkUserRegisteredAsPlayer } from "../api/request/UserRequest";
 import { SigninDialog } from "./SigninDialog";
 import { appName, regions } from "../Definitions";
-import { backgroundTheme, classStyles, darkerTextColor, defaultTheme, goldColor, useStyles } from "../public/assets/styles/styles.web";
+import { backgroundTheme, darkerTextColor, defaultTheme, drawerWidth, goldColor, useStyles } from "../public/assets/styles/styles.web";
 import Header from "./Header";
 import Cookies from "universal-cookie";
 import { isMobile } from "react-device-detect";
 import { ThumbnailUploader, HeaderUploader } from "./ImageUploader";
 import Image from "next/image";
 
-export interface BaseProps extends WithStyles<typeof classStyles>, WithRouterProps {
+var TranslationXML = require('xml-loader!../public/assets/Translations.xml');
+
+export interface BaseProps extends WithStyles<typeof styles>, WithRouterProps {
     region: string
 }
 
@@ -27,7 +30,7 @@ export interface BaseStates {
     height?: number
     selectedNavValue: string
     thumbnail_url?: string
-    header_url?: string
+    header_url?: string | null
     showSetupDialog?: boolean
     name?: string
     bio?: string
@@ -47,13 +50,13 @@ export interface BaseStates {
     snackErrorMsg?: string,
     anchorEl?: HTMLElement | null
     user?: User | null
-    window?: Window
 }
 
 const cookies = new Cookies();
 
 export default abstract class PageBaseClass<Props extends BaseProps, State extends BaseStates, SS = any> extends React.Component<Props, State, SS> {
     styles: Props["classes"];
+    languages = TranslationXML.xml.Translations[0]
 
     constructor(props: Props) {
         super(props);
@@ -84,8 +87,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
             changingRegion: false,
             snackSuccessMsg: "",
             snackErrorMsg: "",
-            anchorEl: null,
-            window: window
+            anchorEl: null
         })
         console.log(getUser())
         if (getUser()) {
@@ -149,13 +151,8 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
         this.setState({ showSigninDialog: true })
     }
 
-    onSignedIn() {
-        this.state.window?.location.reload()
-    }
-
-    onSignedOut() {
-        cookies.remove("user_setup_finished")
-        this.state.window?.location.reload()
+    getTranslationOfLanguage(language: string, key: string) {
+        return this.languages[language][0][key][0]
     }
 
     handleMenuClose = () => {
@@ -180,7 +177,10 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                     }}>Profile <AccountCircle style={{ marginLeft: 8 }} /></MenuItem>
                     <MenuItem onClick={() => {
                         this.handleMenuClose()
-                        signOut().then(() => this.onSignedOut())
+                        signOut().then(() => {
+                            cookies.remove("user_setup_finished")
+                            window.location.href = "/" + this.state.region
+                        })
                     }}>Sign out</MenuItem>
                 </Menu>
             )
@@ -212,7 +212,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
         switch (this.state.region) {
             case "jp":
                 return (
-                    <Dialog open={(this.state.showSetupDialog) ? this.state.showSetupDialog : false} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
+                    <Dialog open={this.state.showSetupDialog!} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
                         <DialogTitle>プロフィール設定</DialogTitle>
                         <DialogContent>
                             {(this.state.setupErrorMsg) ? <Alert severity="error">{this.state.setupErrorMsg}</Alert> : null}
@@ -259,7 +259,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                 )
             default:
                 return (
-                    <Dialog open={(this.state.showSetupDialog) ? this.state.showSetupDialog : false} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
+                    <Dialog open={this.state.showSetupDialog!} onClose={() => this.setState({ showSetupDialog: false })} fullScreen>
                         <DialogTitle>Setup Profile</DialogTitle>
                         <DialogContent>
                             {(this.state.setupErrorMsg) ? <Alert severity="error">{this.state.setupErrorMsg}</Alert> : null}
@@ -360,7 +360,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
     render() {
         if (isMobile) {
             return (
-                <div className={this.styles.root}>
+                <div className={this.styles.root} style={{ overflow: "hidden" }}>
                     {this.renderHeader()}
                     <AppBar position="fixed" >
                         <Toolbar>
@@ -380,18 +380,16 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                             </IconButton>
                         </Toolbar>
                     </AppBar>
-                    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: this.state.height }}>
-                        <main style={{ backgroundColor: defaultTheme, width: "100%", marginBottom: 56 }}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: this.state.height, overflow: "hidden" }}>
+                        <main style={{ backgroundColor: defaultTheme, width: "100%", overflow: "scroll" }}>
                             <div className={this.styles.drawerHeader} />
                             <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
-                                this.onSignedIn()
+                                this.setState({ showSigninDialog: false })
                             }} onClose={() => {
                                 this.setState({ showSigninDialog: false })
                             }} />
                             <div style={{ height: 5 }} />
-                            <div style={{ width: this.state.width, height: this.state.height! - 115, overflow: "scroll" }}>
-                                {this.renderContent()}
-                            </div>
+                            {this.renderContent()}
                         </main>
                         <BottomNavigation
                             value={this.state.selectedNavValue}
@@ -400,7 +398,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                                 router.push("/" + this.state.region + "/" + value)
                             }}
                             showLabels
-                            style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid", bottom: 0, position: "fixed" }}
+                            style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}
                         >
                             <BottomNavigationAction label="Home" icon={<Home style={{ color: goldColor }} />} value="/" style={{ color: darkerTextColor }} />
                             <BottomNavigationAction label="Games" icon={<SportsSoccerTwoTone style={{ color: goldColor }} />} value="games" style={{ color: darkerTextColor }} />
@@ -443,7 +441,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                     <main style={{ width: this.state.width, display: 'flex', flexDirection: 'column' }}>
                         <div className={this.styles.drawerHeader} />
                         <SigninDialog show={(this.state.showSigninDialog) ? this.state.showSigninDialog : false} region={this.state.region!} mode={this.state.signinMode} signedIn={user => {
-                            this.onSignedIn()
+                            this.setState({ showSigninDialog: false })
                         }} onClose={() => {
                             this.setState({ showSigninDialog: false })
                         }} />
@@ -469,6 +467,173 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
             )
     }
 }
+
+export const styles = (theme: Theme) => createStyles({
+    root: {
+        display: 'flex',
+        backgroundColor: backgroundTheme
+    },
+    appBar: {
+        zIndex: theme.zIndex.drawer + 1,
+    },
+    drawerAppBar: {
+        transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+        backgroundColor: backgroundTheme,
+    },
+    appBarShift: {
+        width: `calc(100% - ${drawerWidth}px)`,
+        marginLeft: drawerWidth,
+        transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    },
+    menuButton: {
+        marginRight: theme.spacing(2),
+        [theme.breakpoints.up('sm')]: {
+            display: 'none',
+        },
+    },
+    hide: {
+        display: 'none',
+    },
+    drawer: {
+        [theme.breakpoints.up('sm')]: {
+            width: drawerWidth,
+            flexShrink: 0,
+        },
+    },
+    drawerPaper: {
+        width: drawerWidth,
+        backgroundColor: backgroundTheme
+    },
+    drawerContainer: {
+        backgroundColor: '#454545'
+    },
+    drawerHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: theme.spacing(0, 1),
+        // necessary for content to be below app bar
+        ...theme.mixins.toolbar,
+        justifyContent: 'flex-end',
+    },
+    content: {
+        flexGrow: 1,
+        // padding: theme.spacing(3),
+        transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+        marginLeft: -drawerWidth,
+        width: "100%"
+    },
+    contentShift: {
+        transition: theme.transitions.create('margin', {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+        marginLeft: 0,
+        height: "100vh" + theme.mixins.toolbar,
+    },
+    textColor: {
+        color: 'white'
+    },
+    control: {
+        padding: theme.spacing(2),
+    },
+    grow: {
+        flexGrow: 1,
+    },
+    searchMobile: {
+        display: 'flex',
+        [theme.breakpoints.up('md')]: {
+            display: 'none',
+        },
+        marginLeft: 16,
+        marginRight: 16
+    },
+    searchDesktop: {
+        display: 'none',
+        [theme.breakpoints.up('md')]: {
+            display: 'flex',
+            position: 'relative',
+            borderRadius: theme.shape.borderRadius,
+            backgroundColor: alpha(theme.palette.common.white, 0.15),
+            '&:hover': {
+                backgroundColor: alpha(theme.palette.common.white, 0.25),
+            },
+            marginRight: theme.spacing(2),
+            marginLeft: 16,
+            width: '100%',
+            [theme.breakpoints.up('sm')]: {
+                // marginLeft: theme.spacing(3),
+                width: 'auto',
+            },
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        marginLeft: 16,
+        marginRight: 16
+    },
+    searchIcon: {
+        padding: theme.spacing(0, 2),
+        height: '100%',
+        position: 'absolute',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    searchSpacer: {
+        [theme.breakpoints.up('md')]: {
+            flexGrow: 1,
+        },
+    },
+    inputRoot: {
+        color: 'inherit',
+    },
+    inputInput: {
+        paddingLeft: 16,
+        transition: theme.transitions.create('width'),
+        width: '100%',
+        [theme.breakpoints.up('md')]: {
+            width: '60ch',
+        },
+    },
+    sectionDesktop: {
+        display: 'none',
+        [theme.breakpoints.up('md')]: {
+            display: 'flex',
+        },
+    },
+    sectionMobile: {
+        display: 'flex',
+        [theme.breakpoints.up('md')]: {
+            display: 'none',
+        },
+    },
+    formTextField: {
+        backgroundColor: "white",
+        color: darkerTextColor,
+        marginTop: 16
+    },
+    thumbnailCircle100: {
+        borderRadius: 100
+    },
+    thumbnailCircle48: {
+        borderRadius: 24
+    },
+    thumbnailCircle36: {
+        borderRadius: 18
+    },
+    thumbnailCircle30: {
+        borderRadius: 15
+    }
+});
 
 interface props {
     content: JSX.Element,
