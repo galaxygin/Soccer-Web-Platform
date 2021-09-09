@@ -328,7 +328,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                     ))}
                 </TextField>} {this.getTranslationOf("language")}: <TextField onChange={e => {
                     this.setState({ language: e.target.value })
-                }} value={this.state.region} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
+                }} value={this.state.language} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
                     {languages.map(language => (
                         <MenuItem key={language.key} value={language.value}>{language.label}</MenuItem>
                     ))}
