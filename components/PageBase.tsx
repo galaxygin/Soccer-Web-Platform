@@ -8,13 +8,15 @@ import React from "react";
 import { addUserToDB, getUser, signOut } from "../api/request/AuthRequest";
 import { getSimpleProfile, checkUserRegisteredAsPlayer } from "../api/request/UserRequest";
 import { SigninDialog } from "./SigninDialog";
-import { appName, regions } from "../Definitions";
+import { appName, languages, regions } from "../Definitions";
 import { backgroundTheme, classStyles, darkerTextColor, defaultTheme, goldColor } from "../public/assets/styles/styles.web";
 import Header from "./Header";
 import Cookies from "universal-cookie";
 import { isMobile } from "react-device-detect";
 import { ThumbnailUploader, HeaderUploader } from "./ImageUploader";
 import Image from "next/image";
+
+var translationXML = require('xml-loader!../public/assets/Translations.xml');
 
 export interface BaseProps extends WithStyles<typeof classStyles>, WithRouterProps {
     region: string
@@ -51,8 +53,6 @@ export interface BaseStates {
 }
 
 const cookies = new Cookies();
-
-var translationXML = require('xml-loader!../public/assets/Translations.xml');
 
 export default abstract class PageBaseClass<Props extends BaseProps, State extends BaseStates, SS = any> extends React.Component<Props, State, SS> {
     styles: Props["classes"];
@@ -151,7 +151,7 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
         this.setState({ showSigninDialog: true })
     }
 
-    getTranslationOf(key: string, language: string) {
+    getTranslationOf(key: string, language: string = this.state.language) {
         return this.languages[language][0][key][0]
     }
 
@@ -310,23 +310,29 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
     renderDesktopNavMenu() {
         return <div style={{ width: "25%", alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
             <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + this.state.region)}>
-                {this.getTranslationOf("Home", this.state.language)} <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                {this.getTranslationOf("home", this.state.language)} <Home style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
             </Typography>
             <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + this.state.region + "/games")}>
-                {this.getTranslationOf("Games", this.state.language)} <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                {this.getTranslationOf("games", this.state.language)} <SportsSoccerTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
             </Typography>
             <Typography style={{ backgroundColor: defaultTheme, width: "90%", height: 50, color: darkerTextColor, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 25, marginTop: 16 }} variant="h5" onClick={() => router.push("/" + this.state.region + "/tournaments")}>
-                {this.getTranslationOf("Tournaments", this.state.language)} <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
+                {this.getTranslationOf("tournaments", this.state.language)} <EmojiEventsTwoTone style={{ marginLeft: 8, width: 40, height: 30, color: goldColor }} />
             </Typography>
             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", color: "white", marginTop: 16 }}>
-                ©️ AIZero Inc. 2021     Region: {(this.state.changingRegion) ? <CircularProgress /> : <TextField onChange={e => {
+                ©️ AIZero Inc. 2021     {this.getTranslationOf("region")}: {(this.state.changingRegion) ? <CircularProgress /> : <TextField onChange={e => {
                     this.setState({ changingRegion: true })
                     router.push("../" + e.target.value)
                 }} value={this.state.region} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
                     {regions.map(region => (
                         <MenuItem key={region.key} value={region.value}>{region.label}</MenuItem>
                     ))}
-                </TextField>}
+                </TextField>} {this.getTranslationOf("language")}: <TextField onChange={e => {
+                    this.setState({ language: e.target.value })
+                }} value={this.state.region} select style={{ marginLeft: 8, backgroundColor: "silver" }} >
+                    {languages.map(language => (
+                        <MenuItem key={language.key} value={language.value}>{language.label}</MenuItem>
+                    ))}
+                </TextField>
             </div>
         </div>
     }
@@ -374,10 +380,9 @@ export default abstract class PageBaseClass<Props extends BaseProps, State exten
                             showLabels
                             style={{ backgroundColor: 'white', width: "100%", borderColor: backgroundTheme, borderWidth: 1, borderStyle: "solid" }}
                         >
-                            <BottomNavigationAction label="Home" icon={<Home style={{ color: goldColor }} />} value="/" style={{ color: darkerTextColor }} />
-                            <BottomNavigationAction label="Games" icon={<SportsSoccerTwoTone style={{ color: goldColor }} />} value="games" style={{ color: darkerTextColor }} />
-                            <BottomNavigationAction label="Tournament" icon={<EmojiEventsTwoTone style={{ color: goldColor }} />} value="tournaments" style={{ color: darkerTextColor }} />
-                            <BottomNavigationAction label="Search" icon={<Search style={{ color: goldColor }} />} value="search" style={{ color: darkerTextColor }} />
+                            <BottomNavigationAction label={this.getTranslationOf("home", this.state.language)} icon={<Home style={{ color: goldColor }} />} value="/" style={{ color: darkerTextColor }} />
+                            <BottomNavigationAction label={this.getTranslationOf("games", this.state.language)} icon={<SportsSoccerTwoTone style={{ color: goldColor }} />} value="games" style={{ color: darkerTextColor }} />
+                            <BottomNavigationAction label={this.getTranslationOf("tournaments", this.state.language)} icon={<EmojiEventsTwoTone style={{ color: goldColor }} />} value="tournaments" style={{ color: darkerTextColor }} />
                         </BottomNavigation>
                     </div>
                     <Snackbar open={(this.state.snackSuccessMsg) ? true : false} autoHideDuration={6000} onClose={() => this.setState({ snackSuccessMsg: "" })}>
