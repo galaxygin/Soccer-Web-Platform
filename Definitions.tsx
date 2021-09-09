@@ -188,6 +188,17 @@ export const regions: Region[] = [
     { key: "japan", value: "jp", label: "日本" },
 ]
 
+export type Language = {
+    key: string
+    value: string
+    label: string
+}
+
+export const languages: Language[] = [
+    { key: "en", value: "English", label: "English" },
+    { key: "jp", value: "Japanese", label: "日本語" }
+]
+
 export const getPlayerLevel = (level: number) => {
     switch (level) {
         case 1:

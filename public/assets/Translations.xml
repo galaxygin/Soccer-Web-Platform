@@ -1,15 +1,244 @@
-<xml version="1.0" encoding="utf - 8">
+<xml version="1.0" encoding="utf-8">
     <Translations>
-        <string name="app_name">Soccer Web Platform</string>
         <English>
-            <Home>Home</Home>
-            <Games>Games</Games>
-            <Tournaments>Tournaments</Tournaments>
+            <home>Home</home>
+            <games>Games</games>
+            <tournaments>Tournaments</tournaments>
+            <region>Region</region>
+            <language>Language</language>
+            <close>Close</close>
+            <done>Done</done>
+            <go_back>Go back</go_back>
+            <required>Required</required>
+            <optional>Optional</optional>
+            <player_setup_title>Setup Profile</player_setup_title>
+            <player_setup_required_description>We need these informations at least</player_setup_required_description>
+            <player_setup_bio>Bio (Simply describe yourself)</player_setup_bio>
+            <no_games_found>No games found</no_games_found>
+            <my_games>MY GAMES</my_games>
+            <todays_game>TODAY'S GAMES</todays_game>
+            <games_this_week>GAMES THIS WEEK</games_this_week>
+            <search_games>Search games...</search_games>
+            <game_organized>The game has been organized successfully</game_organized>
+            <location>Location</location>
+            <level>Level</level>
+            <level_anyone>Anyone</level_anyone>
+            <level_mid_level>Mid level</level_mid_level>
+            <level_high_level>High level</level_high_level>
+            <level_professional>Professional level</level_professional>
+            <date_from>Date from</date_from>
+            <time_from>Time from</time_from>
+            <my_tournaments>MY TOURNAMENTS</my_tournaments>
+            <tournaments_upper_letters>TOURNAMENTS</tournaments_upper_letters>
+            <search_tournaments>Search tournaments...</search_tournaments>
+            <tournaments_organized>The tournament has been organized successfully</tournaments_organized>
+            <no_tournaments_found>No tournaments found</no_tournaments_found>
+            <change_thumbnail>Change thumbnail</change_thumbnail>
+            <change_header>Change header</change_header>
+            <visibility>Visibility</visibility>
+            <public>Public</public>
+            <private>Private</private>
+            <name>Name</name>
+            <position>Position</position>
+            <position_anywhere>Anywhere</position_anywhere>
+            <position_GK>GK</position_GK>
+            <position_CB>CB</position_CB>
+            <position_SB>SB</position_SB>
+            <position_MF>MF</position_MF>
+            <position_CF>CF</position_CF>
+            <position_LW>LW</position_LW>
+            <position_RW>RW</position_RW>
+            <local_area>Local area</local_area>
+            <bio>Bio</bio>
+            <player_meta_private>[Private] This player is private account</player_meta_private>
+            <player_not_found>Couldn't get player profile</player_not_found>
+            <consent>Consent</consent>
+            <agreement_of_joining_game><![CDATA[Do you want to join this game?
+                            By joining this game, you must follow the rules and requirement of the game.
+                            Also, if you do any of the following during the game, you'll given warning score that gives you step by step restrictions
+                            ・No show
+                            ・Violence
+                            ・Harrassment
+                            ・Racism
+                            ・Breaching the rules
+                            ・Any other things that the organizer considers as not tolerated]]>
+            </agreement_of_joining_game>
+            <join>Join</join>
+            <join_success>Joined the game successfully</join_success>
+            <game_details_updated>The game details updated successfully</game_details_updated>
+            <organizer>Organizer</organizer>
+            <date>Date</date>
+            <max_players>Max players</max_players>
+            <send_message>Send message to participants</send_message>
+            <empty_message>Message is empty</empty_message>
+            <game_cancelled>This game has been cancelled</game_cancelled>
+            <cancel_commission>Cancel commission</cancel_commission>
+            <no_spots_left>The number of the participants has exceeded the max number of players</no_spots_left>
+            <join_game>Join this game</join_game>
+            <passcode>Passcode</passcode>
+            <passcode_title>Passcode required</passcode_title>
+            <passcode_description><![CDATA[This game requires passcode to see the details.
+                                Please enter the passcode you are provided.]]>
+            </passcode_description>
+            <proceed>Proceed</proceed>
+            <game_not_found>Couldn't get game details. Please check passcode or network and try again</game_not_found>
+            <participants>Participants</participants>
+            <participants_not_found>Something went wrong and could't get participants</participants_not_found>
+            <signin>Sign in</signin>
+            <signup>Sign up</signup>
+            <email>Email</email>
+            <password>Password</password>
+            <confirm_password>Confirm password</confirm_password>
+            <forgot_password>Forgot password</forgot_password>
+            <create_account>You can create an account if you don't have one</create_account>
+            <already_have_account>You can sign in if you already have an account</already_have_account>
+            <email_not_filled>Email is not filled</email_not_filled>
+            <password_not_match>Password doesn't match</password_not_match>
+            <password_length_not_enough>Password length must be more than 8 characters</password_length_not_enough>
+            <signup_success>Sign up success. Please confirm your enail first</signup_success>
+            <thumbnail>Thumbnail</thumbnail>
+            <header>Header</header>
+            <upload>Upload</upload>
+            <title>Title</title>
+            <description>Description</description>
+            <time>Time</time>
+            <customize_game>Customize game (Optional)</customize_game>
+            <game_form_passcode_label>Passcode (To make it private)</game_form_passcode_label>
+            <min_players>Min players</min_players>
+            <custom_rules>Custom rules</custom_rules>
+            <requirements>Requirements</requirements>
+            <cancel_warning>Once the game is cancelled, it can't be undone</cancel_warning>
+            <cancel_game>Cancel game</cancel_game>
+            <organize_game>Organize a game</organize_game>
+            <update_game_details>Update game details</update_game_details>
+            <title_error>Title is required</title_error>
+            <description_error>Description is required</description_error>
+            <location_error>Location is required</location_error>
+            <datetime_error>The datetime has already passed</datetime_error>
+            <name_error>Name is required</name_error>
+            <bio_error>Bio is required</bio_error>
+            <update>Update</update>
+            <post>Post</post>
         </English>
         <Japanese>
-            <Home>ホーム</Home>
-            <Games>ゲーム</Games>
-            <Tournaments>トーナメント</Tournaments>
+            <home>ホーム</home>
+            <games>ゲーム</games>
+            <tournaments>トーナメント</tournaments>
+            <region>国</region>
+            <language>言語</language>
+            <close>閉じる</close>
+            <done>完了</done>
+            <go_back>戻る</go_back>
+            <required>必須項目</required>
+            <optional>オプション</optional>
+            <player_setup_title>プロフィール設定</player_setup_title>
+            <player_setup_required_description>これらは設定に最低限必要な情報となります。</player_setup_required_description>
+            <player_setup_bio>説明 (あなた自身について簡単に説明してください)</player_setup_bio>
+            <no_games_found>ゲームは見つかりませんでした</no_games_found>
+            <my_games>マイゲーム</my_games>
+            <todays_game>今日のゲーム</todays_game>
+            <games_this_week>今週のゲーム</games_this_week>
+            <search_games>ゲームを探す...</search_games>
+            <game_organized>ゲームの投稿に成功しました</game_organized>
+            <location>場所</location>
+            <level>レベル</level>
+            <level_anyone>誰でも</level_anyone>
+            <level_mid_level>普通</level_mid_level>
+            <level_high_level>上級</level_high_level>
+            <level_professional>プロレベル</level_professional>
+            <date_from>この日から</date_from>
+            <time_from>この時間から</time_from>
+            <my_tournaments>マイトーナメント</my_tournaments>
+            <tournaments_upper_letters>トーナメント</tournaments_upper_letters>
+            <search_tournaments>トーナメントを検索...</search_tournaments>
+            <tournaments_organized>トーナメントの投稿に成功しました</tournaments_organized>
+            <no_tournaments_found>トーナメントは見つかりませんでした</no_tournaments_found>
+            <change_thumbnail>サムネ画像を変更</change_thumbnail>
+            <change_header>ヘッダー画像を変更</change_header>
+            <visibility>プロフィール</visibility>
+            <public>公開</public>
+            <private>非公開</private>
+            <name>表示名</name>
+            <position>ポジション</position>
+            <position_anywhere>どこでも</position_anywhere>
+            <position_GK>GK</position_GK>
+            <position_CB>CB</position_CB>
+            <position_SB>SB</position_SB>
+            <position_MF>MF</position_MF>
+            <position_CF>CF</position_CF>
+            <position_LW>LW</position_LW>
+            <position_RW>RW</position_RW>
+            <local_area>地元</local_area>
+            <bio>説明</bio>
+            <player_meta_private>[非公開] このプレイヤーのアカウントは非公開です</player_meta_private>
+            <player_not_found>プレイヤー情報を取得できませんでした</player_not_found>
+            <consent>確認</consent>
+            <agreement_of_joining_game><![CDATA[このゲームに参加しますか?
+                            このゲームに参加する事で、ゲームのルールと要件に同意した事になります。
+                            また、参加中の以下の行為を行うと警告スコアが増加し段階的な規制が行われます。
+                            ・姿を見せない
+                            ・暴力
+                            ・ハラスメント
+                            ・差別
+                            ・ルールに従わない
+                            ・その他、主催者が問題と認識した行為]]>
+            </agreement_of_joining_game>
+            <join>参加する</join>
+            <join_success>ゲームに参加しました</join_success>
+            <game_details_updated>ゲーム情報のアップデートに成功しました</game_details_updated>
+            <organizer>主催者</organizer>
+            <date>日時</date>
+            <max_players>最大人数</max_players>
+            <send_message>参加者にメッセージを送る</send_message>
+            <empty_message>メッセージが空です</empty_message>
+            <game_cancelled>このゲームはキャンセルされました</game_cancelled>
+            <cancel_commission>参加取り消し</cancel_commission>
+            <no_spots_left>ゲームの参加者数が上限に達しました</no_spots_left>
+            <join_game>ゲームに参加する</join_game>
+            <passcode>パスコード</passcode>
+            <passcode_title>パスコードが必要です</passcode_title>
+            <passcode_description><![CDATA[このゲームの詳細を閲覧する為にはパスコードが必要です。
+                                提供されたパスコードを入力してください。]]>
+            </passcode_description>
+            <proceed>進む</proceed>
+            <game_not_found>ゲーム詳細の取得に失敗しました。パスコード・ネットワークを確認した上でリトライして下さい</game_not_found>
+            <participants>参加者</participants>
+            <participants_not_found>参加者の取得に失敗しました</participants_not_found>
+            <signin>サインイン</signin>
+            <signup>サインアップ</signup>
+            <email>メールアドレス</email>
+            <password>パスワード</password>
+            <confirm_password>パスワード確認</confirm_password>
+            <forgot_password>パスワードを忘れた場合</forgot_password>
+            <create_account>まだアカウントをお持ちでない方はこちら</create_account>
+            <already_have_account>既にアカウントをお持ちの方はこちら</already_have_account>
+            <email_not_filled>メールアドレスが正しくありません</email_not_filled>
+            <password_not_match>パスワードが一致しません</password_not_match>
+            <password_length_not_enough>パスワードは8文字以上である必要があります</password_length_not_enough>
+            <signup_success>アカウントが作成されました。メールアドレスを確認してアクティベーションを完了させてください。</signup_success>
+            <thumbnail>サムネイル</thumbnail>
+            <header>ヘッダー</header>
+            <upload>アップロード</upload>
+            <title>タイトル</title>
+            <description>説明</description>
+            <time>時間</time>
+            <customize_game>ゲームのカスタマイズ (オプション)</customize_game>
+            <game_form_passcode_label>パスコード (プライベートにしたい場合)</game_form_passcode_label>
+            <min_players>最小人数</min_players>
+            <custom_rules>独自のルール</custom_rules>
+            <requirements>独自の要件</requirements>
+            <cancel_warning>一度ゲームをキャンセルすると、取り消しはできません。</cancel_warning>
+            <cancel_game>ゲームをキャンセルする</cancel_game>
+            <organize_game>ゲームを作成</organize_game>
+            <update_game_details>ゲームの編集</update_game_details>
+            <title_error>タイトルは必須です</title_error>
+            <description_error>説明は必須です</description_error>
+            <location_error>場所は必須です</location_error>
+            <datetime_error>日時が過去のものです</datetime_error>
+            <name_error>表示名は必須です</name_error>
+            <bio_error>説明は必須です</bio_error>
+            <update>更新</update>
+            <post>投稿</post>
         </Japanese>
     </Translations>
 </xml>
