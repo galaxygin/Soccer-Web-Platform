@@ -4,6 +4,8 @@
             <home>Home</home>
             <games>Games</games>
             <tournaments>Tournaments</tournaments>
+            <region>Region</region>
+            <language>Language</language>
             <close>Close</close>
             <done>Done</done>
             <go_back>Go back</go_back>
@@ -122,6 +124,8 @@
             <home>ホーム</home>
             <games>ゲーム</games>
             <tournaments>トーナメント</tournaments>
+            <region>国</region>
+            <language>言語</language>
             <close>閉じる</close>
             <done>完了</done>
             <go_back>戻る</go_back>
